@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:id="@+id/nav_language"
+        android:title="Select Language"
+        android:icon="@drawable/ic_language" />
+
+    <item android:id="@+id/nav_location"
+        android:title="Select Location"
+        android:icon="@drawable/ic_location" />
+
+    <item android:id="@+id/nav_dark_theme"
+        android:title="Dark Theme"
+        android:icon="@drawable/ic_dark_theme" />
+
+    <item android:id="@+id/nav_notifications"
+        android:title="Notifications"
+        android:icon="@drawable/ic_notification" />
+
+    <item android:id="@+id/nav_about"
+        android:title="About us"
+        android:icon="@drawable/ic_about_us" />
+
+    <item android:id="@+id/nav_contact"
+        android:title="Contact us"
+        android:icon="@drawable/ic_contact_us" />
+
+    <item android:id="@+id/nav_feedback"
+        android:title="Feedback"
+        android:icon="@drawable/ic_feedback" />
+
+    <item android:id="@+id/nav_rate"
+        android:title="Rate us"
+        android:icon="@drawable/ic_star" />
+
+    <item android:id="@+id/nav_signout"
+        android:title="Sign out"
+        android:icon="@drawable/ic_signout" />
+
+</menu>
