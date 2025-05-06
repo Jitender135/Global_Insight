@@ -1,0 +1,68 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="20dp"
+    android:background="#FFFFFF">
+
+    <!-- Full Name Input -->
+    <EditText
+        android:id="@+id/fullNameInput"
+        android:hint="Full Name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="textPersonName"
+        android:layout_marginBottom="10dp"/>
+
+    <!-- Email Input -->
+    <EditText
+        android:id="@+id/emailInput"
+        android:hint="Email Address"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="textEmailAddress"
+        android:layout_marginBottom="10dp"/>
+
+
+
+    <!-- RadioGroup for selecting report reason -->
+    <RadioGroup
+        android:id="@+id/reasonGroup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <RadioButton android:id="@+id/fakeNewsRadio" android:text="Fake News" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+        <RadioButton android:id="@+id/clickbaitRadio" android:text="Clickbait" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+        <RadioButton android:id="@+id/hateSpeechRadio" android:text="Hate Speech" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+        <RadioButton android:id="@+id/misinformationRadio" android:text="Misinformation" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+    </RadioGroup>
+
+    <!-- Input for specifying other reason -->
+    <EditText
+        android:id="@+id/otherReasonInput"
+        android:hint="Specify other reason"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="text"
+        android:layout_marginBottom="10dp"/>
+
+    <!-- Explanation field -->
+    <EditText
+        android:id="@+id/fullExplanationInput"
+        android:hint="Your detailed explanation"
+        android:layout_width="match_parent"
+        android:layout_height="150dp"
+        android:inputType="textMultiLine"
+        android:gravity="top"
+        android:minLines="6"
+        android:layout_marginBottom="10dp"/>
+
+    <!-- Submit Button -->
+    <Button
+        android:id="@+id/submitReportButton"
+        android:text="Submit Report"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_gravity="center"/>
+
+</LinearLayout>
