@@ -14,11 +14,11 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <!-- Prominent Article Banner Image -->
+        <!-- Prominent Article Banner Image (Inshorts Style) -->
         <ImageView
             android:id="@+id/newsImage"
             android:layout_width="match_parent"
-            android:layout_height="210dp"
+            android:layout_height="220dp"
             android:scaleType="centerCrop"
             android:adjustViewBounds="true"
             android:contentDescription="Article Image"
@@ -31,8 +31,7 @@
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:paddingHorizontal="16dp"
-            android:paddingTop="14dp"
-            android:paddingBottom="4dp">
+            android:paddingTop="12dp">
 
             <TextView
                 android:id="@+id/sourceTag"
@@ -86,17 +85,17 @@
                 android:background="?attr/selectableItemBackgroundBorderless" />
         </LinearLayout>
 
-        <!-- Article Headline Title -->
+        <!-- Article Headline -->
         <TextView
             android:id="@+id/newsTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="News Headline"
+            android:text="Headline text goes here..."
             android:textSize="18sp"
             android:textStyle="bold"
             android:lineSpacingExtra="3dp"
             android:paddingHorizontal="16dp"
-            android:paddingTop="8dp"
+            android:paddingTop="10dp"
             android:textColor="?android:attr/textColorPrimary" />
 
         <!-- Article Description / Story Summary -->
@@ -104,45 +103,37 @@
             android:id="@+id/newsDescription"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Brief description of the news story..."
+            android:text="Detailed description of the news story..."
             android:textSize="14sp"
             android:lineSpacingExtra="2dp"
             android:paddingHorizontal="16dp"
             android:paddingTop="8dp"
             android:textColor="?android:attr/textColorSecondary" />
 
-        <!-- Bottom Action Row (Published Time, Read More Link) -->
-        <LinearLayout
+        <!-- Metadata Footer (Time Ago | Author | Source) -->
+        <TextView
+            android:id="@+id/newsFooter"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
+            android:text="few hours ago | Author Name"
+            android:textSize="12sp"
+            android:textColor="#888888"
             android:paddingHorizontal="16dp"
             android:paddingTop="12dp"
-            android:paddingBottom="14dp">
+            android:paddingBottom="4dp" />
 
-            <TextView
-                android:id="@+id/publishedTime"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Just now"
-                android:textSize="12sp"
-                android:textColor="#888888" />
-
-            <View
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:layout_weight="1" />
-
-            <TextView
-                android:id="@+id/readMore"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Tap to read full story →"
-                android:textColor="@color/blue"
-                android:textStyle="bold"
-                android:textSize="13sp" />
-        </LinearLayout>
+        <!-- Read More Button -->
+        <TextView
+            android:id="@+id/readMore"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Tap to read full story →"
+            android:textColor="@color/blue"
+            android:textStyle="bold"
+            android:textSize="13sp"
+            android:paddingHorizontal="16dp"
+            android:paddingBottom="16dp"
+            android:paddingTop="4dp" />
 
     </LinearLayout>
 

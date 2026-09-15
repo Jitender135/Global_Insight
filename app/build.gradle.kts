@@ -47,6 +47,11 @@ dependencies {
     // Retrofit for API calls
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    // Glide for image loading
+    implementation("com.github.bumptech.glide:glide:4.16.0")
+    // SwipeRefreshLayout for Pull to Refresh
+    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
+
     implementation(libs.navigation.fragment)
     implementation(libs.navigation.ui)
 

@@ -29,7 +29,7 @@ public class SignInActivity extends AppCompatActivity {
         passwordEditText = findViewById(R.id.editTextPassword);
         Button loginButton = findViewById(R.id.btnLogin);
         TextView signUpText = findViewById(R.id.sign_up);
-        ImageView backButton = findViewById(R.id.backButton);
+        TextView guestIcon = findViewById(R.id.guestIcon);
 
         // Sign Up redirect
         signUpText.setOnClickListener(v -> {
@@ -40,8 +40,16 @@ public class SignInActivity extends AppCompatActivity {
         // Login button action
         loginButton.setOnClickListener(v -> loginUser());
 
-        // Back button
-        backButton.setOnClickListener(v -> onBackPressed());
+        // Guest / Skip action
+        if (guestIcon != null) {
+            guestIcon.setOnClickListener(v -> {
+                getSharedPreferences("user_preferences", MODE_PRIVATE).edit().putBoolean("is_guest", true).apply();
+                Toast.makeText(SignInActivity.this, "Continuing as Guest", Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(SignInActivity.this, HomeActivity.class);
+                startActivity(intent);
+                finish();
+            });
+        }
     }
 
     private void loginUser() {
@@ -61,6 +69,7 @@ public class SignInActivity extends AppCompatActivity {
         mAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, task -> {
                     if (task.isSuccessful()) {
+                        getSharedPreferences("user_preferences", MODE_PRIVATE).edit().putBoolean("is_guest", false).apply();
                         Toast.makeText(SignInActivity.this, "Login successful!", Toast.LENGTH_SHORT).show();
                         // ✅ Redirect to home (for returning users)
                         Intent intent = new Intent(SignInActivity.this, HomeActivity.class);

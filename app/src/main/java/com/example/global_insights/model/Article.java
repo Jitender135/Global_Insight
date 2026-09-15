@@ -36,6 +36,10 @@ public class Article {
         return description;
     }
 
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
     public String getUrl() {
         return url;
     }

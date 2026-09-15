@@ -17,6 +17,11 @@ public class LocaleHelper {
         editor.putString(LANGUAGE_KEY, languageCode);
         editor.apply();
 
+        // Also sync to user_preferences
+        SharedPreferences.Editor userPrefsEditor = context.getSharedPreferences("user_preferences", Context.MODE_PRIVATE).edit();
+        userPrefsEditor.putString("selected_language", languageCode);
+        userPrefsEditor.apply();
+
         // Set the new locale
         Locale locale = new Locale(languageCode);
         Locale.setDefault(locale);
@@ -31,7 +36,7 @@ public class LocaleHelper {
     }
 
     public static String getSavedLanguage(Context context) {
-        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        return prefs.getString(LANGUAGE_KEY, "en"); // Default to English
+        SharedPreferences prefs = context.getSharedPreferences("user_preferences", Context.MODE_PRIVATE);
+        return prefs.getString("selected_language", "en"); // Default to English
     }
 }

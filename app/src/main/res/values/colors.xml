@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="black">#000000</color>
-    <color name="dark_gray">#757575</color>
+    <color name="dark_gray">#475569</color>
     <color name="white">#FFFFFF</color>
-    <color name="blue">#2196F3</color> <!-- or any shade you prefer -->
-    <color name="nav_header_bg">#1A237E</color>
+    <color name="blue">#2563EB</color>
+    <color name="brand_dark_blue">#2563EB</color>
+    <color name="brand_dark_blue_variant">#1D4ED8</color>
+    <color name="nav_header_bg">#1E2937</color>
+    <color name="star_yellow">#FFC107</color>
 </resources>

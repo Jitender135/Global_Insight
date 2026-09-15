@@ -14,4 +14,17 @@ public interface NewsApiService {
             @Query("apiKey") String apiKey,
             @Query("language") String language
     );
+
+    @GET("top-headlines")
+    Call<NewsResponse> getTopHeadlines(
+            @Query("country") String country,
+            @Query("apiKey") String apiKey
+    );
+
+    @GET("top-headlines")
+    Call<NewsResponse> getTopHeadlinesByCategory(
+            @Query("country") String country,
+            @Query("category") String category,
+            @Query("apiKey") String apiKey
+    );
 }

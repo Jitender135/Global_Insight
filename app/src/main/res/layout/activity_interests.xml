@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white">
+    android:background="?android:attr/colorBackground">
 
     <!-- Page Title -->
 
@@ -31,7 +31,7 @@
         android:layout_height="27dp"
         android:gravity="center"
         android:text="Pick your interests"
-        android:textColor="@color/black"
+        android:textColor="?android:attr/textColorPrimary"
         android:textSize="22sp"
         android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="parent"

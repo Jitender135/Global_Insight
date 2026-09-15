@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="120dp"
+    android:viewportWidth="200"
+    android:viewportHeight="120">
+    <!-- Background Card Tint -->
+    <path
+        android:fillColor="#1E293B"
+        android:pathData="M0,0h200v120h-200z" />
+    
+    <!-- Subtle Grid Lines -->
+    <path
+        android:fillColor="#334155"
+        android:pathData="M0,40h200v2h-200z M0,80h200v2h-200z M66,0v120h2v-120z M133,0v120h2v-120z" />
+
+    <!-- Centered Globe Icon -->
+    <path
+        android:fillColor="#3B82F6"
+        android:pathData="M100,40A20,20 0 0,0 80,60A20,20 0 0,0 100,80A20,20 0 0,0 120,60A20,20 0 0,0 100,40M100,44A16,16 0 0,1 115.86,58H107.72C107.08,53 105.08,48.46 102.12,45C101.44,44.28 100.74,43.62 100,43M100,43C99.26,43.62 98.56,44.28 97.88,45C94.92,48.46 92.92,53 92.28,58H84.14A16,16 0 0,1 100,44M84.14,62H92.28C92.92,67 94.92,71.54 97.88,75C98.56,75.72 99.26,76.38 100,77C100.74,76.38 101.44,75.72 102.12,75C105.08,71.54 107.08,67 107.72,62H115.86A16,16 0 0,1 100,76Z" />
+</vector>

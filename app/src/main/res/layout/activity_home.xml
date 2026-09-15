@@ -13,71 +13,250 @@
         android:id="@+id/homeLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@android:color/white"
+        android:background="?android:attr/colorBackground"
         android:fitsSystemWindows="true">
 
         <!-- Top App Bar -->
-
-        <!-- TabLayout -->
         <RelativeLayout
             android:id="@+id/topBar"
             android:layout_width="0dp"
-            android:layout_height="90dp"
-            android:background="@android:color/white"
-            android:paddingTop="12dp"
-            android:paddingEnd="16dp"
-            android:paddingBottom="12dp"
+            android:layout_height="70dp"
+            android:background="?attr/colorSurface"
+            android:paddingHorizontal="16dp"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="1.0"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
 
             <ImageView
                 android:id="@+id/appLogo"
-                android:layout_width="215dp"
-                android:layout_height="76dp"
+                android:layout_width="200dp"
+                android:layout_height="58dp"
+                android:layout_centerVertical="true"
                 android:adjustViewBounds="true"
                 android:contentDescription="Global Insights Logo"
-                android:scaleType="fitCenter"
+                android:scaleType="fitStart"
                 android:src="@drawable/logo2" />
 
+            <!-- Vector Menu Button (3 Lines) -->
             <ImageView
                 android:id="@+id/settings_button"
-                android:layout_width="43dp"
-                android:layout_height="41dp"
-                android:layout_alignParentTop="true"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
                 android:layout_alignParentEnd="true"
-                android:layout_marginTop="11dp"
-                android:layout_marginEnd="-5dp"
-                android:contentDescription="Settings"
-                android:padding="4dp"
-                android:src="@drawable/ic_dots" />
+                android:layout_centerVertical="true"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:contentDescription="Settings Menu"
+                android:focusable="true"
+                android:padding="8dp"
+                android:src="@drawable/ic_menu"
+                app:tint="?android:attr/textColorPrimary" />
         </RelativeLayout>
 
+        <!-- Animated Breaking News Flash Ticker -->
+        <LinearLayout
+            android:id="@+id/breakingNewsContainer"
+            android:layout_width="0dp"
+            android:layout_height="36dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="#E53935"
+            android:paddingHorizontal="12dp"
+            android:visibility="gone"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/topBar">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="⚡ BREAKING"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold"
+                android:textSize="12sp"
+                android:paddingEnd="8dp" />
+
+            <TextView
+                android:id="@+id/breakingNewsText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="marquee"
+                android:marqueeRepeatLimit="marquee_forever"
+                android:singleLine="true"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:text="Fetching top breaking headlines across the nation..."
+                android:textColor="#FFFFFF"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Search Bar Container (Hidden by default, shown when Search is selected) -->
+        <LinearLayout
+            android:id="@+id/searchBarContainer"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="10dp"
+            android:background="?attr/colorSurface"
+            android:visibility="gone"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/topBar">
+
+            <EditText
+                android:id="@+id/searchEditText"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:background="@drawable/search_bar_bg"
+                android:hint="Search news by keyword..."
+                android:imeOptions="actionSearch"
+                android:inputType="text"
+                android:paddingHorizontal="16dp"
+                android:textSize="14sp"
+                android:textColor="?android:attr/textColorPrimary"
+                android:textColorHint="#757575" />
+
+            <ImageView
+                android:id="@+id/searchSubmitButton"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="8dp"
+                android:padding="12dp"
+                android:src="@drawable/ic_search"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                app:tint="?android:attr/textColorPrimary" />
+        </LinearLayout>
+
+        <!-- TabLayout for Home Categories -->
         <com.google.android.material.tabs.TabLayout
             android:id="@+id/tabLayout"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:background="@android:color/white"
+            android:background="?attr/colorSurface"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/topBar"
+            app:layout_constraintTop_toBottomOf="@+id/searchBarContainer"
             app:tabGravity="fill"
-            app:tabIndicatorColor="@color/black"
+            app:tabIndicatorColor="?attr/colorPrimary"
             app:tabMode="scrollable"
-            app:tabSelectedTextColor="@color/black"
-            app:tabTextColor="@color/dark_gray"
+            app:tabSelectedTextColor="?attr/colorPrimary"
+            app:tabTextColor="?android:attr/textColorSecondary"
             tools:ignore="SpeakableTextPresentCheck" />
 
-        <!-- RecyclerView -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/newsRecyclerView"
+        <!-- Category Back Header Bar (Shown when viewing a specific category's news) -->
+        <LinearLayout
+            android:id="@+id/categoryHeaderBar"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:background="?attr/colorSurface"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="10dp"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tabLayout">
+
+            <ImageView
+                android:id="@+id/btnCategoryBack"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:padding="6dp"
+                android:src="@drawable/ic_arrow_back"
+                app:tint="?android:attr/textColorPrimary" />
+
+            <TextView
+                android:id="@+id/tvCategoryHeaderTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:text="Category: Technology"
+                android:textColor="?android:attr/textColorPrimary"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <TextView
+                android:id="@+id/btnBackToGrid"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Change Category"
+                android:textColor="?attr/colorPrimary"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:padding="4dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground" />
+        </LinearLayout>
+
+        <!-- Barrier below Top Header/Tabs -->
+        <androidx.constraintlayout.widget.Barrier
+            android:id="@+id/contentTopBarrier"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:barrierDirection="bottom"
+            app:constraint_referenced_ids="tabLayout,searchBarContainer,categoryHeaderBar" />
+
+        <!-- Empty State Message -->
+        <TextView
+            android:id="@+id/emptyStateText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="32dp"
+            android:gravity="center"
+            android:text="No articles found."
+            android:textSize="16sp"
+            android:textColor="?android:attr/textColorSecondary"
+            android:visibility="gone"
+            app:layout_constraintTop_toBottomOf="@id/contentTopBarrier"
+            app:layout_constraintBottom_toTopOf="@id/bottomNavigation"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <!-- News RecyclerView wrapped in SwipeRefreshLayout -->
+        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+            android:id="@+id/swipeRefreshLayout"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:background="@android:color/white"
+            app:layout_constraintTop_toBottomOf="@id/contentTopBarrier"
+            app:layout_constraintBottom_toTopOf="@id/bottomNavigation"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/newsRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="?android:attr/colorBackground"
+                android:padding="12dp"
+                android:clipToPadding="false" />
+        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+        <!-- Category Grid RecyclerView (Used in Categories Tab) -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/categoryRecyclerView"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:background="?android:attr/colorBackground"
             android:padding="12dp"
             android:clipToPadding="false"
-            app:layout_constraintTop_toBottomOf="@id/tabLayout"
+            android:visibility="gone"
+            app:layout_constraintTop_toBottomOf="@id/contentTopBarrier"
             app:layout_constraintBottom_toTopOf="@id/bottomNavigation"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
@@ -87,14 +266,13 @@
             android:id="@+id/bottomNavigation"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:background="@android:color/white"
+            android:background="?attr/colorSurface"
             app:itemIconSize="24dp"
             app:itemIconTint="@color/nav_icon_color"
             app:itemTextColor="@color/nav_icon_color"
             app:labelVisibilityMode="labeled"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
             app:menu="@menu/bottom_nav_menu" />
     </androidx.constraintlayout.widget.ConstraintLayout>
@@ -105,7 +283,7 @@
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:layout_gravity="start"
-        android:background="@android:color/white"
+        android:background="?attr/colorSurface"
         app:menu="@menu/settings_menu"
         app:headerLayout="@layout/nav_header" />
 </androidx.drawerlayout.widget.DrawerLayout>

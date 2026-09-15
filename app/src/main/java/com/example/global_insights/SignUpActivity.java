@@ -42,10 +42,6 @@ public class SignUpActivity extends AppCompatActivity {
         privacyPolicyCheckBox = findViewById(R.id.privacyPolicy);
         signUpButton = findViewById(R.id.signUpButton);
 
-        // Handle back button
-        ImageView backButton = findViewById(R.id.backButton);
-        backButton.setOnClickListener(v -> onBackPressed());
-
         // Sign-up button logic
         signUpButton.setOnClickListener(new View.OnClickListener() {
             @Override
