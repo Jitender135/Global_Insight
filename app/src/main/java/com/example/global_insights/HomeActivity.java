@@ -81,7 +81,7 @@ public class HomeActivity extends AppCompatActivity {
     private NavigationView navigationView;
     private ImageView settingButton;
 
-    private final String API_KEY = "316356d807a14581b154282e64386d25"; // 🔑 User's NewsAPI Key
+    private final String API_KEY = "YOUR_NEWS_API_KEY"; // Replace with your NewsAPI key from https://newsapi.org/
 
     private final Map<String, List<Article>> tabArticleCache = new HashMap<>();
     private final Map<String, Long> tabCacheTime = new HashMap<>();
