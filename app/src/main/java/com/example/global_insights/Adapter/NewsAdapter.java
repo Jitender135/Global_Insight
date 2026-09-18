@@ -196,6 +196,17 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder
                 context.startActivity(browserIntent);
             }
         });
+
+        // "Ask this Story" opens AskStoryBottomSheetDialog
+        if (holder.btnAskStory != null) {
+            holder.btnAskStory.setOnClickListener(v -> {
+                if (context instanceof androidx.fragment.app.FragmentActivity) {
+                    com.example.global_insights.AskStoryBottomSheetDialog dialog =
+                            com.example.global_insights.AskStoryBottomSheetDialog.newInstance(news);
+                    dialog.show(((androidx.fragment.app.FragmentActivity) context).getSupportFragmentManager(), "AskStoryDialog");
+                }
+            });
+        }
     }
 
     @Override
@@ -281,6 +292,7 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder
         androidx.cardview.widget.CardView cardView;
         TextView title, description, readMore, sourceTag, publishedTime, newsFooter;
         ImageView bookmarkIcon, newsImage, shareIcon, audioButton;
+        View btnAskStory;
 
         public NewsViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -295,6 +307,7 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder
             newsImage = itemView.findViewById(R.id.newsImage);
             shareIcon = itemView.findViewById(R.id.shareIcon);
             audioButton = itemView.findViewById(R.id.audioButton);
+            btnAskStory = itemView.findViewById(R.id.btnAskStory);
         }
     }
 }

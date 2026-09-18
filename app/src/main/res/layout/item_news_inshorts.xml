@@ -122,6 +122,30 @@
             android:paddingTop="12dp"
             android:paddingBottom="4dp" />
 
+        <!-- Ask this Story AI Button -->
+        <LinearLayout
+            android:id="@+id/btnAskStory"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
+            android:background="@drawable/bg_ask_story_button"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingVertical="10dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="UNCOVER STORY FACTS"
+                android:textColor="#FFFFFF"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
         <!-- Read More Button -->
         <TextView
             android:id="@+id/readMore"
