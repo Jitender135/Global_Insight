@@ -8,4 +8,45 @@
     <color name="brand_dark_blue_variant">#1D4ED8</color>
     <color name="nav_header_bg">#1E2937</color>
     <color name="star_yellow">#FFC107</color>
+
+    <!-- Semantic Surface & Theme Colors (Day) -->
+    <color name="sheet_bg">#FFFFFF</color>
+    <color name="sheet_handle">#CBD5E1</color>
+    <color name="dialog_bg">#FFFFFF</color>
+    <color name="banner_bg">#FFFFFF</color>
+    <color name="banner_border">#E2E8F0</color>
+
+    <color name="card_normal_bg">#FFFFFF</color>
+    <color name="card_normal_stroke">#E2E8F0</color>
+
+    <color name="card_active_bg">#EFF6FF</color>
+    <color name="card_active_stroke">#2563EB</color>
+
+    <color name="search_area_bg">#F0F7FF</color>
+    <color name="search_area_stroke">#BFDBFE</color>
+    <color name="search_area_text">#2563EB</color>
+
+    <color name="input_field_bg">#F8FAFC</color>
+    <color name="input_field_stroke">#E2E8F0</color>
+
+    <!-- Semantic Text Colors (Day) -->
+    <color name="text_primary">#0F172A</color>
+    <color name="text_secondary">#64748B</color>
+    <color name="text_muted">#94A3B8</color>
+    <color name="text_accent">#2563EB</color>
+    <color name="text_accent_dark">#1D4ED8</color>
+
+    <!-- Badges & Pill Colors (Day) -->
+    <color name="badge_active_bg">#EFF6FF</color>
+    <color name="badge_active_text">#1D4ED8</color>
+    <color name="badge_distance_bg">#EFF6FF</color>
+    <color name="badge_distance_text">#2563EB</color>
+    <color name="icon_container_blue_bg">#EFF6FF</color>
+    <color name="icon_container_blue_tint">#2563EB</color>
+    <color name="pill_blue_bg">#EFF6FF</color>
+    <color name="pill_blue_text">#1D4ED8</color>
+    <color name="pill_outline_bg">#FFFFFF</color>
+    <color name="pill_outline_stroke">#E2E8F0</color>
+    <color name="pill_outline_text">#0F172A</color>
+    <color name="delete_icon_tint">#EF4444</color>
 </resources>

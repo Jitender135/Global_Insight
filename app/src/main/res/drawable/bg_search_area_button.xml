@@ -3,10 +3,10 @@
     android:color="#202563EB">
     <item>
         <shape android:shape="rectangle">
-            <solid android:color="#F0F7FF" />
+            <solid android:color="@color/search_area_bg" />
             <stroke
                 android:width="1.5dp"
-                android:color="#BFDBFE" />
+                android:color="@color/search_area_stroke" />
             <corners android:radius="14dp" />
         </shape>
     </item>

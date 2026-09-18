@@ -20,6 +20,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -1623,17 +1624,20 @@ public class HomeActivity extends AppCompatActivity {
             boolean isWork = "💼".equals(selectedTag[0]);
             boolean isOther = "📍".equals(selectedTag[0]);
 
+            int activeColor = ContextCompat.getColor(HomeActivity.this, R.color.pill_blue_text);
+            int inactiveColor = ContextCompat.getColor(HomeActivity.this, R.color.pill_outline_text);
+
             chipHome.setBackgroundResource(isHome ? R.drawable.bg_radius_pill_blue : R.drawable.bg_radius_pill_outline);
-            chipHome.setTextColor(isHome ? 0xFF1D4ED8 : 0xFF0F172A);
+            chipHome.setTextColor(isHome ? activeColor : inactiveColor);
 
             chipCollege.setBackgroundResource(isCollege ? R.drawable.bg_radius_pill_blue : R.drawable.bg_radius_pill_outline);
-            chipCollege.setTextColor(isCollege ? 0xFF1D4ED8 : 0xFF0F172A);
+            chipCollege.setTextColor(isCollege ? activeColor : inactiveColor);
 
             chipWork.setBackgroundResource(isWork ? R.drawable.bg_radius_pill_blue : R.drawable.bg_radius_pill_outline);
-            chipWork.setTextColor(isWork ? 0xFF1D4ED8 : 0xFF0F172A);
+            chipWork.setTextColor(isWork ? activeColor : inactiveColor);
 
             chipOther.setBackgroundResource(isOther ? R.drawable.bg_radius_pill_blue : R.drawable.bg_radius_pill_outline);
-            chipOther.setTextColor(isOther ? 0xFF1D4ED8 : 0xFF0F172A);
+            chipOther.setTextColor(isOther ? activeColor : inactiveColor);
         };
         updateChipStyles.run();
 

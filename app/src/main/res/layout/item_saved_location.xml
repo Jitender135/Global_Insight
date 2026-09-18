@@ -10,7 +10,8 @@
     android:focusable="true"
     android:foreground="?attr/selectableItemBackground"
     app:cardCornerRadius="14dp"
-    app:cardElevation="0dp">
+    app:cardElevation="0dp"
+    app:cardBackgroundColor="@android:color/transparent">
 
     <LinearLayout
         android:id="@+id/layoutSavedLocationItemContainer"
@@ -57,7 +58,7 @@
                     android:text="Home"
                     android:textSize="14sp"
                     android:textStyle="bold"
-                    android:textColor="#0F172A" />
+                    android:textColor="@color/text_primary" />
 
                 <TextView
                     android:id="@+id/tvDistanceBadge"
@@ -68,7 +69,7 @@
                     android:paddingHorizontal="7dp"
                     android:paddingVertical="2dp"
                     android:text="0.2 km away"
-                    android:textColor="#2563EB"
+                    android:textColor="@color/badge_distance_text"
                     android:textSize="10sp"
                     android:textStyle="bold"
                     android:visibility="gone" />
@@ -81,7 +82,7 @@
                 android:layout_marginTop="2dp"
                 android:text="Palam Vihar, Gurugram (122017)"
                 android:textSize="12sp"
-                android:textColor="#64748B"
+                android:textColor="@color/text_secondary"
                 android:maxLines="2"
                 android:ellipsize="end" />
         </LinearLayout>
@@ -94,7 +95,7 @@
             android:layout_marginEnd="6dp"
             android:src="@drawable/ic_check_white"
             android:visibility="gone"
-            app:tint="#2563EB" />
+            app:tint="@color/text_accent" />
 
         <!-- Delete Action -->
         <ImageView
@@ -106,7 +107,8 @@
             android:focusable="true"
             android:padding="6dp"
             android:src="@drawable/ic_trash_vector"
-            android:contentDescription="Delete Location" />
+            android:contentDescription="Delete Location"
+            app:tint="@color/delete_icon_tint" />
 
     </LinearLayout>
 

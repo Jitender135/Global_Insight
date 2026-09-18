@@ -96,6 +96,16 @@ public class SavedLocationsBottomSheetDialog extends BottomSheetDialogFragment {
         return view;
     }
 
+    @Override
+    public void onStart() {
+        super.onStart();
+        if (getDialog() != null && getDialog().getWindow() != null) {
+            View bottomSheet = getDialog().findViewById(com.google.android.material.R.id.design_bottom_sheet);
+            if (bottomSheet != null) {
+                bottomSheet.setBackgroundResource(android.R.color.transparent);
+            }
+        }
+    }
 
     private void refreshUI() {
         if (getContext() == null) return;
