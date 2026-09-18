@@ -2,6 +2,10 @@ import os
 import json
 import httpx
 from typing import Dict, Any, List
+from dotenv import load_dotenv
+
+load_dotenv()
+load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
@@ -10,20 +14,21 @@ async def call_free_ai_api(prompt: str, system_prompt: str) -> str:
     """
     Executes AI prompt against 100% FREE AI models on Groq / Gemini.
     """
-    if GROQ_API_KEY:
+    groq_key = os.getenv("GROQ_API_KEY", "") or GROQ_API_KEY
+    if groq_key:
         url = "https://api.groq.com/openai/v1/chat/completions"
         headers = {
-            "Authorization": f"Bearer {GROQ_API_KEY}",
+            "Authorization": f"Bearer {groq_key}",
             "Content-Type": "application/json"
         }
 
-        # Active Groq model IDs verified on API
+        # Active Groq model IDs verified on API (prioritizing fast direct output models)
         models_to_try = [
-            "openai/gpt-oss-20b",
-            "openai/gpt-oss-120b",
             "qwen/qwen3.8-27b",
+            "groq/compound-mini",
             "groq/compound",
-            "groq/compound-mini"
+            "openai/gpt-oss-20b",
+            "openai/gpt-oss-120b"
         ]
 
         for model in models_to_try:
@@ -35,23 +40,25 @@ async def call_free_ai_api(prompt: str, system_prompt: str) -> str:
                         {"role": "user", "content": prompt}
                     ],
                     "temperature": 0.2,
-                    "max_tokens": 500
+                    "max_tokens": 1024
                 }
                 async with httpx.AsyncClient(timeout=25.0) as client:
                     res = await client.post(url, headers=headers, json=payload)
                     if res.status_code == 200:
                         data = res.json()
-                        res_text = data["choices"][0]["message"]["content"].strip()
+                        msg = data["choices"][0]["message"]
+                        res_text = (msg.get("content") or "").strip()
                         if res_text:
                             return res_text
             except Exception as e:
                 print(f"Groq model {model} error: {e}")
                 continue
 
-    if GEMINI_API_KEY:
+    gemini_key = os.getenv("GEMINI_API_KEY", "") or GEMINI_API_KEY
+    if gemini_key:
         try:
             async with httpx.AsyncClient(timeout=25.0) as client:
-                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_key}"
                 payload = {
                     "contents": [{"parts": [{"text": f"{system_prompt}\n\n{prompt}"}]}]
                 }
@@ -62,7 +69,8 @@ async def call_free_ai_api(prompt: str, system_prompt: str) -> str:
         except Exception as e:
             print(f"Gemini call error: {e}")
 
-    return "Unable to process story question right now. Please try again."
+    return ""
+
 
 async def generate_suggested_questions(title: str, summary: str, source: str) -> List[str]:
     system_prompt = (
@@ -128,11 +136,18 @@ async def answer_story_question(
     try:
         answer_text = await call_free_ai_api(prompt, system_prompt)
         if not answer_text or len(answer_text.strip()) == 0:
-            answer_text = f"<b>Key Information:</b><br/>• For official details regarding this topic, refer to verified primary releases from {source_name}."
+            summary_snippet = story_summary.strip() if story_summary and len(story_summary.strip()) > 0 else story_title
+            answer_text = (
+                f"<b>Key Takeaways from {source_name}:</b><br/>"
+                f"• {summary_snippet}<br/>"
+                f"• Refer to official primary releases from {source_name} for additional updates."
+            )
     except Exception as e:
         print(f"AI API error: {e}")
+        summary_snippet = story_summary.strip() if story_summary and len(story_summary.strip()) > 0 else story_title
         answer_text = (
-            "Unable to generate response right now. Please check internet connection."
+            f"<b>Story Fact Sheet ({source_name}):</b><br/>"
+            f"• {summary_snippet}"
         )
 
     sources = []
