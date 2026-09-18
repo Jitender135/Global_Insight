@@ -9,10 +9,12 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.graphics.Color;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -41,6 +43,7 @@ public class AskStoryBottomSheetDialog extends BottomSheetDialogFragment {
     private EditText etQuestionInput;
     private ImageView btnSendQuestion;
     private ImageView btnCloseSheet;
+    private TextView btnFollowStoryHeader;
 
     public static AskStoryBottomSheetDialog newInstance(Article article) {
         AskStoryBottomSheetDialog dialog = new AskStoryBottomSheetDialog();
@@ -71,6 +74,7 @@ public class AskStoryBottomSheetDialog extends BottomSheetDialogFragment {
         etQuestionInput = view.findViewById(R.id.et_question_input);
         btnSendQuestion = view.findViewById(R.id.btn_send_question);
         btnCloseSheet = view.findViewById(R.id.btn_close_sheet);
+        btnFollowStoryHeader = view.findViewById(R.id.btn_follow_story_header);
 
         if (story != null) {
             tvStoryTitle.setText(story.getTitle());
@@ -82,6 +86,7 @@ public class AskStoryBottomSheetDialog extends BottomSheetDialogFragment {
         rvChatMessages.setAdapter(chatAdapter);
 
         btnCloseSheet.setOnClickListener(v -> dismiss());
+        setupFollowStoryButton();
 
         btnSendQuestion.setOnClickListener(v -> {
             String q = etQuestionInput.getText().toString().trim();
@@ -100,6 +105,64 @@ public class AskStoryBottomSheetDialog extends BottomSheetDialogFragment {
         );
         chatList.add(welcome);
         chatAdapter.notifyItemInserted(chatList.size() - 1);
+    }
+
+    private void setupFollowStoryButton() {
+        if (btnFollowStoryHeader == null || story == null) return;
+
+        String safeStoryKey = FollowStoryManager.getSafeStoryKey(story.getStoryId(), story.getTitle());
+
+        // Check if user is registered
+        if (!FollowStoryManager.isUserRegistered(getContext())) {
+            updateFollowButtonUi(false);
+            btnFollowStoryHeader.setOnClickListener(v -> {
+                FollowStoryManager.showGuestPrompt(getContext());
+            });
+            return;
+        }
+
+        // For registered users, check current follow status
+        FollowStoryManager.checkFollowStatus(getContext(), safeStoryKey, isFollowed -> {
+            if (isAdded() && getContext() != null) {
+                updateFollowButtonUi(isFollowed);
+            }
+        });
+
+        btnFollowStoryHeader.setOnClickListener(v -> {
+            if (getContext() == null || story == null) return;
+            btnFollowStoryHeader.setEnabled(false);
+            FollowStoryManager.toggleFollow(getContext(), story, new FollowStoryManager.FollowToggleCallback() {
+                @Override
+                public void onComplete(boolean isNowFollowed, String message) {
+                    if (isAdded() && getContext() != null) {
+                        btnFollowStoryHeader.setEnabled(true);
+                        updateFollowButtonUi(isNowFollowed);
+                        Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+                    }
+                }
+
+                @Override
+                public void onError(String errorMessage) {
+                    if (isAdded() && getContext() != null) {
+                        btnFollowStoryHeader.setEnabled(true);
+                        Toast.makeText(getContext(), "Error: " + errorMessage, Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+        });
+    }
+
+    private void updateFollowButtonUi(boolean isFollowed) {
+        if (btnFollowStoryHeader == null) return;
+        if (isFollowed) {
+            btnFollowStoryHeader.setText("✓ FOLLOWING");
+            btnFollowStoryHeader.setTextColor(Color.parseColor("#059669"));
+            btnFollowStoryHeader.setBackgroundResource(R.drawable.bg_following_button);
+        } else {
+            btnFollowStoryHeader.setText("+ FOLLOW STORY");
+            btnFollowStoryHeader.setTextColor(Color.parseColor("#FFFFFF"));
+            btnFollowStoryHeader.setBackgroundResource(R.drawable.bg_follow_button);
+        }
     }
 
     private void loadSuggestedQuestions() {

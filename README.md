@@ -13,6 +13,9 @@
 
 ### AI-Powered Story Intelligence & Q&A
 - **Uncover Story Facts**: Interactive bottom sheet (`AskStoryBottomSheetDialog`) enabling readers to ask deep, contextual questions about any news article.
+- **Follow Story (Registered Members)**: Follow ongoing news stories directly from the top corner of the "Uncover Story Facts" sheet (`+ FOLLOW STORY` / `✓ FOLLOWING`).
+- **Firebase Database Tracking**: Followed story metadata (`storyId`, `title`, `source`, `sourceUrl`, `category`, and timestamps) is stored in Firebase Realtime Database under `users/{userId}/followed_stories/{storyKey}` so members can receive updates as events unfold.
+- **Guest Protection & Prompts**: Dedicated guardrail prompting guest users to sign in before following stories, ensuring genuine membership value.
 - **Quick Tap Question Chips**: Dynamic contextual suggestion chips generated per story for one-tap insight discovery.
 - **Grounded Fact Retrieval & Scoping**: Powered by a Python FastAPI backend integrated with Groq AI models (e.g., Qwen 3.8 27B, Groq Compound). Ensures responses stay strictly scoped to verified news context and domain background.
 - **Story Source Citations**: Direct primary source attribution and tier badges attached to every response.
@@ -78,6 +81,7 @@ Global_Insight/
 │   │   ├── BookmarkManager.java          # Local bookmark persistence utility
 │   │   ├── ContactActivity.java          # Contact support activity
 │   │   ├── FeedbackActivity.java         # User feedback submission activity
+│   │   ├── FollowStoryManager.java       # Firebase Realtime Database & local follow story manager
 │   │   ├── GlobalInsightsApp.java        # Application base class
 │   │   ├── HomeActivity.java             # Main dashboard and navigation drawer
 │   │   ├── InterestActivity.java         # Category preferences selection
@@ -88,6 +92,7 @@ Global_Insight/
 │   │   ├── SignInActivity.java           # Firebase login activity
 │   │   └── SignUpActivity.java           # Firebase registration activity
 │   └── src/main/res/
+│       ├── drawable/                     # Dynamic drawables (including bg_follow_button.xml, bg_following_button.xml)
 │       ├── layout/                       # UI layout definitions (including bottom_sheet_ask_story.xml)
 │       ├── values/                       # Light theme styles and strings
 │       └── values-night/                 # Dark theme overrides
