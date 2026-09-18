@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/cardSavedLocation"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="8dp"
+    android:layout_marginVertical="5dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
+    app:cardCornerRadius="14dp"
+    app:cardElevation="0dp">
+
+    <LinearLayout
+        android:id="@+id/layoutSavedLocationItemContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@drawable/bg_saved_location_card_normal"
+        android:padding="12dp">
+
+        <!-- Icon Container -->
+        <FrameLayout
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/bg_icon_container_blue">
+
+            <TextView
+                android:id="@+id/tvLocationIcon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="🏠"
+                android:textSize="20sp" />
+        </FrameLayout>
+
+        <!-- Location Information -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="12dp"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/tvLocationLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Home"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="#0F172A" />
+
+                <TextView
+                    android:id="@+id/tvDistanceBadge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/bg_badge_distance"
+                    android:paddingHorizontal="7dp"
+                    android:paddingVertical="2dp"
+                    android:text="0.2 km away"
+                    android:textColor="#2563EB"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvLocationAddress"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Palam Vihar, Gurugram (122017)"
+                android:textSize="12sp"
+                android:textColor="#64748B"
+                android:maxLines="2"
+                android:ellipsize="end" />
+        </LinearLayout>
+
+        <!-- Active Checkmark Indicator -->
+        <ImageView
+            android:id="@+id/ivActiveIndicator"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_marginEnd="6dp"
+            android:src="@drawable/ic_check_white"
+            android:visibility="gone"
+            app:tint="#2563EB" />
+
+        <!-- Delete Action -->
+        <ImageView
+            android:id="@+id/btnDeleteSavedLocation"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true"
+            android:padding="6dp"
+            android:src="@drawable/ic_trash_vector"
+            android:contentDescription="Delete Location" />
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

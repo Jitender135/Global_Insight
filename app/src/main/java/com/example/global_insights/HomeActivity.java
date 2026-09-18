@@ -47,6 +47,17 @@ import com.google.firebase.database.ValueEventListener;
 import com.example.global_insights.Adapter.CategoryAdapter;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+import android.content.pm.PackageManager;
+import com.example.global_insights.model.SavedLocation;
+import com.google.gson.Gson;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -66,11 +77,29 @@ public class HomeActivity extends AppCompatActivity {
     private List<String> getCategories() {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser == null) {
-            return Arrays.asList("All News", "Trending", "National", "International", "Local News", "Categories");
+            return Arrays.asList("All News", "Trending", "National", "International", "Local News", "Around Me (10km)", "Categories");
         } else {
-            return Arrays.asList("My Feed", "All News", "Trending", "National", "International", "Local News", "Categories");
+            return Arrays.asList("My Feed", "All News", "Trending", "National", "International", "Local News", "Around Me (10km)", "Categories");
         }
     }
+
+    private LinearLayout radiusLocationBanner;
+    private ImageView ivRadiusBannerPin;
+    private TextView tvRadiusBannerIcon;
+    private TextView tvRadiusBannerMode;
+    private TextView tvRadiusBannerLocation;
+    private TextView btnSaveRadiusLocation;
+    private TextView btnSwitchRadiusPlaces;
+    private ImageView btnRefreshRadiusGps;
+
+    // Current GPS cache for quick saving
+    private double currentGpsLat = 0.0;
+    private double currentGpsLon = 0.0;
+    private String currentGpsAddress = "";
+    private String currentGpsSubLocality = "";
+    private String currentGpsLocality = "";
+    private String currentGpsPostalCode = "";
+
 
     private TabLayout tabLayout;
     private RecyclerView newsRecyclerView;
@@ -150,8 +179,36 @@ public class HomeActivity extends AppCompatActivity {
         // Initialize top Breaking News ticker
         fetchBreakingNewsTicker();
 
+        // Initialize Radius News Location Banner & Actions
+        radiusLocationBanner = findViewById(R.id.radiusLocationBanner);
+        ivRadiusBannerPin = findViewById(R.id.ivRadiusBannerPin);
+        tvRadiusBannerIcon = findViewById(R.id.tvRadiusBannerIcon);
+        tvRadiusBannerMode = findViewById(R.id.tvRadiusBannerMode);
+        tvRadiusBannerLocation = findViewById(R.id.tvRadiusBannerLocation);
+        btnSaveRadiusLocation = findViewById(R.id.btnSaveRadiusLocation);
+        btnSwitchRadiusPlaces = findViewById(R.id.btnSwitchRadiusPlaces);
+        btnRefreshRadiusGps = findViewById(R.id.btnRefreshRadiusGps);
+
+        if (btnSaveRadiusLocation != null) {
+            btnSaveRadiusLocation.setOnClickListener(v -> showSaveLocationDialog());
+        }
+        if (btnSwitchRadiusPlaces != null) {
+            btnSwitchRadiusPlaces.setOnClickListener(v -> showSavedLocationsBottomSheet());
+        }
+        if (btnRefreshRadiusGps != null) {
+            btnRefreshRadiusGps.setOnClickListener(v -> {
+                Toast.makeText(this, "Refreshing GPS location...", Toast.LENGTH_SHORT).show();
+                SavedLocationManager.setActiveToLiveGps(this);
+                loadRadiusNewsTab(true);
+            });
+        }
+        SavedLocationManager.setActiveToLiveGps(this);
+        updatePlacesButtonBadge();
+        SavedLocationManager.loadFromFirebaseIfAvailable(this);
+
         // Setup Category Grid & Back Header
         LinearLayout categoryHeaderBar = findViewById(R.id.categoryHeaderBar);
+
         ImageView btnCategoryBack = findViewById(R.id.btnCategoryBack);
         TextView btnBackToGrid = findViewById(R.id.btnBackToGrid);
         TextView tvCategoryHeaderTitle = findViewById(R.id.tvCategoryHeaderTitle);
@@ -316,6 +373,9 @@ public class HomeActivity extends AppCompatActivity {
         if (categoryHeaderBar != null) {
             categoryHeaderBar.setVisibility(View.GONE);
         }
+        if (radiusLocationBanner != null) {
+            radiusLocationBanner.setVisibility(View.GONE);
+        }
 
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         boolean isGuest = (currentUser == null);
@@ -369,7 +429,11 @@ public class HomeActivity extends AppCompatActivity {
                         emptyStateText.setOnClickListener(v -> showLocationSelectionDialog());
                     }
                     break;
-                case 5: // Categories
+                case 5: // Around Me (10km Radius)
+                    SavedLocationManager.setActiveToLiveGps(this);
+                    loadRadiusNewsTab(true);
+                    break;
+                case 6: // Categories
                     newsRecyclerView.setVisibility(View.GONE);
                     emptyStateText.setVisibility(View.GONE);
                     categoryRecyclerView.setVisibility(View.VISIBLE);
@@ -440,7 +504,11 @@ public class HomeActivity extends AppCompatActivity {
                         emptyStateText.setOnClickListener(v -> showLocationSelectionDialog());
                     }
                     break;
-                case 6: // Categories
+                case 6: // Around Me (10km Radius)
+                    SavedLocationManager.setActiveToLiveGps(this);
+                    loadRadiusNewsTab(true);
+                    break;
+                case 7: // Categories
                     newsRecyclerView.setVisibility(View.GONE);
                     emptyStateText.setVisibility(View.GONE);
                     enableSnapScrolling(false);
@@ -457,6 +525,7 @@ public class HomeActivity extends AppCompatActivity {
             }
         }
     }
+
 
     private String getDefaultSearchQueryForLanguage(String langCode, String category) {
         if (category != null && !category.isEmpty()) {
@@ -1283,8 +1352,425 @@ public class HomeActivity extends AppCompatActivity {
         });
     }
 
+    // ==========================================
+    // 📍 HYPER-LOCAL RADIUS (10KM) NEWS FEATURE
+    // ==========================================
+
+    private void loadRadiusNewsTab() {
+        loadRadiusNewsTab(false);
+    }
+
+    private void loadRadiusNewsTab(boolean forceLiveGpsRefresh) {
+        if (radiusLocationBanner != null) {
+            radiusLocationBanner.setVisibility(View.VISIBLE);
+        }
+        if (categoryRecyclerView != null) categoryRecyclerView.setVisibility(View.GONE);
+        TextView emptyStateText = findViewById(R.id.emptyStateText);
+        if (emptyStateText != null) emptyStateText.setVisibility(View.GONE);
+        newsRecyclerView.setVisibility(View.VISIBLE);
+        newsAdapter.setInshortsStyle(false);
+        enableSnapScrolling(false);
+
+        updatePlacesButtonBadge();
+
+        if (forceLiveGpsRefresh) {
+            SavedLocationManager.setActiveToLiveGps(this);
+        }
+
+        SavedLocation activeSaved = SavedLocationManager.getActiveSavedLocation(this);
+        if (activeSaved != null && !forceLiveGpsRefresh) {
+            // Viewing a saved location (Home, College, etc.)
+            if (ivRadiusBannerPin != null) ivRadiusBannerPin.setVisibility(View.GONE);
+            if (tvRadiusBannerIcon != null) {
+                tvRadiusBannerIcon.setVisibility(View.VISIBLE);
+                tvRadiusBannerIcon.setText(activeSaved.getTagIcon());
+            }
+            if (tvRadiusBannerMode != null) tvRadiusBannerMode.setText(activeSaved.getLabel().toUpperCase(Locale.getDefault()) + " • 10 KM RADIUS");
+            if (tvRadiusBannerLocation != null) tvRadiusBannerLocation.setText(activeSaved.getAddressLine());
+            if (btnSaveRadiusLocation != null) btnSaveRadiusLocation.setVisibility(View.GONE);
+
+            fetchRadiusNews(
+                    activeSaved.getLatitude(),
+                    activeSaved.getLongitude(),
+                    activeSaved.getSubLocality(),
+                    activeSaved.getLocality(),
+                    activeSaved.getPostalCode(),
+                    activeSaved.getLabel()
+            );
+        } else {
+            // Live GPS mode: Always fetch fresh GPS coordinates every time Around Me is selected
+            if (tvRadiusBannerIcon != null) tvRadiusBannerIcon.setVisibility(View.GONE);
+            if (ivRadiusBannerPin != null) ivRadiusBannerPin.setVisibility(View.VISIBLE);
+            if (tvRadiusBannerMode != null) tvRadiusBannerMode.setText("LIVE GPS • 10 KM RADIUS");
+            if (btnSaveRadiusLocation != null) btnSaveRadiusLocation.setVisibility(View.VISIBLE);
+
+            if (!LocationHelper.hasLocationPermission(this)) {
+                if (tvRadiusBannerLocation != null) {
+                    tvRadiusBannerLocation.setText("Location permission required. Tap here to grant.");
+                    tvRadiusBannerLocation.setOnClickListener(v -> LocationHelper.requestLocationPermission(this));
+                }
+                LocationHelper.requestLocationPermission(this);
+            } else {
+                if (tvRadiusBannerLocation != null) {
+                    tvRadiusBannerLocation.setText("Detecting your exact GPS location...");
+                    tvRadiusBannerLocation.setOnClickListener(null);
+                }
+                fetchCurrentGpsAndLoadRadiusNews();
+            }
+        }
+    }
+
+    private void updatePlacesButtonBadge() {
+        if (btnSwitchRadiusPlaces == null) return;
+        List<SavedLocation> list = SavedLocationManager.getSavedLocations(this);
+        if (list.isEmpty()) {
+            btnSwitchRadiusPlaces.setText("📍 Places");
+        } else {
+            btnSwitchRadiusPlaces.setText("📍 Places (" + list.size() + ")");
+        }
+    }
+
+    private void fetchCurrentGpsAndLoadRadiusNews() {
+        if (swipeRefreshLayout != null) swipeRefreshLayout.setRefreshing(true);
+
+        // Invalidate old radius cache to guarantee fresh location news
+        if (tabArticleCache != null) {
+            for (String key : new ArrayList<>(tabArticleCache.keySet())) {
+                if (key.startsWith("radius_")) {
+                    tabArticleCache.remove(key);
+                    tabCacheTime.remove(key);
+                }
+            }
+        }
+
+        LocationHelper.getCurrentCoordinates(this, new LocationHelper.OnLocationResultListener() {
+            @Override
+            public void onLocationReceived(double latitude, double longitude) {
+                currentGpsLat = latitude;
+                currentGpsLon = longitude;
+
+                // Update distances for all saved locations
+                SavedLocationManager.updateDistancesFromCurrent(HomeActivity.this, latitude, longitude);
+                updatePlacesButtonBadge();
+
+                // Reverse geocode to get neighborhood / campus / pincode
+                LocationHelper.reverseGeocode(HomeActivity.this, latitude, longitude, new LocationHelper.OnGeocodeResultListener() {
+                    @Override
+                    public void onGeocodeSuccess(String addressLine, String subLocality, String locality, String postalCode) {
+                        currentGpsAddress = addressLine;
+                        currentGpsSubLocality = subLocality;
+                        currentGpsLocality = locality;
+                        currentGpsPostalCode = postalCode;
+
+                        if (tvRadiusBannerLocation != null) {
+                            tvRadiusBannerLocation.setText(addressLine);
+                        }
+
+                        fetchRadiusNews(latitude, longitude, subLocality, locality, postalCode, "Live GPS");
+                    }
+
+                    @Override
+                    public void onGeocodeFailed(String errorMessage) {
+                        currentGpsAddress = String.format(Locale.getDefault(), "Lat: %.3f, Lon: %.3f", latitude, longitude);
+                        if (tvRadiusBannerLocation != null) {
+                            tvRadiusBannerLocation.setText(currentGpsAddress);
+                        }
+                        fetchRadiusNews(latitude, longitude, "", "India", "", "Live GPS");
+                    }
+                });
+            }
+
+            @Override
+            public void onLocationFailed(String errorMessage) {
+                if (swipeRefreshLayout != null) swipeRefreshLayout.setRefreshing(false);
+                if (tvRadiusBannerLocation != null) {
+                    tvRadiusBannerLocation.setText(errorMessage);
+                }
+                Toast.makeText(HomeActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void fetchRadiusNews(double lat, double lon, String subLocality, String locality, String postalCode, String placeLabel) {
+        String cacheKey = "radius_" + (subLocality != null ? subLocality : "") + "_" + (locality != null ? locality : "") + "_" + (postalCode != null ? postalCode : "");
+        if (isCacheValid(cacheKey)) {
+            setSanitizedArticles(tabArticleCache.get(cacheKey));
+            return;
+        }
+
+        if (swipeRefreshLayout != null) swipeRefreshLayout.setRefreshing(true);
+
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        android.os.Handler mainHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+
+        executor.execute(() -> {
+            boolean backendSuccess = false;
+            try {
+                String backendBase = "http://10.0.2.2:8080";
+                StringBuilder urlBuilder = new StringBuilder(backendBase + "/api/radius-news?");
+                if (lat != 0.0) urlBuilder.append("lat=").append(lat).append("&");
+                if (lon != 0.0) urlBuilder.append("lon=").append(lon).append("&");
+                if (subLocality != null && !subLocality.isEmpty()) {
+                    urlBuilder.append("sublocality=").append(URLEncoder.encode(subLocality, "UTF-8")).append("&");
+                }
+                if (locality != null && !locality.isEmpty()) {
+                    urlBuilder.append("locality=").append(URLEncoder.encode(locality, "UTF-8")).append("&");
+                }
+                if (postalCode != null && !postalCode.isEmpty()) {
+                    urlBuilder.append("postal_code=").append(URLEncoder.encode(postalCode, "UTF-8")).append("&");
+                }
+                urlBuilder.append("radius=10");
+
+                URL url = new URL(urlBuilder.toString());
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                conn.setConnectTimeout(6000);
+                conn.setReadTimeout(10000);
+
+                if (conn.getResponseCode() == 200) {
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8));
+                    StringBuilder sb = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        sb.append(line);
+                    }
+                    reader.close();
+
+                    Gson gson = new Gson();
+                    NewsResponse response = gson.fromJson(sb.toString(), NewsResponse.class);
+                    if (response != null && response.getArticles() != null && !response.getArticles().isEmpty()) {
+                        backendSuccess = true;
+                        mainHandler.post(() -> {
+                            saveToCache(cacheKey, response.getArticles());
+                            setSanitizedArticles(response.getArticles());
+                        });
+                    }
+                }
+            } catch (Exception e) {
+                Log.w("HomeActivity", "Backend radius news fallback: " + e.getMessage());
+            }
+
+            if (!backendSuccess) {
+                mainHandler.post(() -> fetchRadiusNewsFallback(cacheKey, subLocality, locality));
+            }
+        });
+    }
+
+    private void fetchRadiusNewsFallback(String cacheKey, String subLocality, String locality) {
+        SharedPreferences preferences = getSharedPreferences("user_preferences", MODE_PRIVATE);
+        String languageCode = preferences.getString("selected_language", "en");
+
+        String query;
+        if (subLocality != null && !subLocality.isEmpty()) {
+            query = (subLocality + " " + (locality != null ? locality : "")).trim();
+        } else if (locality != null && !locality.isEmpty()) {
+            query = locality + " news";
+        } else {
+            query = "India local news";
+        }
+
+        NewsApiService apiService = ApiClient.getClient().create(NewsApiService.class);
+        Call<NewsResponse> call = apiService.getEverything(query, API_KEY, languageCode);
+
+        call.enqueue(new Callback<NewsResponse>() {
+            @Override
+            public void onResponse(Call<NewsResponse> call, Response<NewsResponse> response) {
+                if (response.isSuccessful() && response.body() != null && response.body().getArticles() != null && !response.body().getArticles().isEmpty()) {
+                    saveToCache(cacheKey, response.body().getArticles());
+                    setSanitizedArticles(response.body().getArticles());
+                } else {
+                    fetchLocationNewsFallback(locality, (locality != null && !locality.isEmpty() ? locality : "India") + " news");
+                }
+            }
+
+            @Override
+            public void onFailure(Call<NewsResponse> call, Throwable t) {
+                fetchLocationNewsFallback(locality, (locality != null && !locality.isEmpty() ? locality : "India") + " news");
+            }
+        });
+    }
+
+    private void showSaveLocationDialog() {
+        if (currentGpsLat == 0.0 && currentGpsLon == 0.0) {
+            Toast.makeText(this, "Detecting GPS location... please wait a moment.", Toast.LENGTH_SHORT).show();
+            fetchCurrentGpsAndLoadRadiusNews();
+            return;
+        }
+
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_save_location, null);
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(dialogView)
+                .create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+        }
+
+        TextView tvAddressPreview = dialogView.findViewById(R.id.tvDialogAddressPreview);
+        EditText etLabel = dialogView.findViewById(R.id.etLocationLabel);
+        TextView chipHome = dialogView.findViewById(R.id.chipHome);
+        TextView chipCollege = dialogView.findViewById(R.id.chipCollege);
+        TextView chipWork = dialogView.findViewById(R.id.chipWork);
+        TextView chipOther = dialogView.findViewById(R.id.chipOther);
+        View btnCancel = dialogView.findViewById(R.id.btnCancelSaveLocation);
+        View btnConfirm = dialogView.findViewById(R.id.btnConfirmSaveLocation);
+
+        final String[] selectedTag = {"🏠"};
+        etLabel.setText("Home");
+
+        Runnable updateChipStyles = () -> {
+            boolean isHome = "🏠".equals(selectedTag[0]);
+            boolean isCollege = "🎓".equals(selectedTag[0]);
+            boolean isWork = "💼".equals(selectedTag[0]);
+            boolean isOther = "📍".equals(selectedTag[0]);
+
+            chipHome.setBackgroundResource(isHome ? R.drawable.bg_radius_pill_blue : R.drawable.bg_radius_pill_outline);
+            chipHome.setTextColor(isHome ? 0xFF1D4ED8 : 0xFF0F172A);
+
+            chipCollege.setBackgroundResource(isCollege ? R.drawable.bg_radius_pill_blue : R.drawable.bg_radius_pill_outline);
+            chipCollege.setTextColor(isCollege ? 0xFF1D4ED8 : 0xFF0F172A);
+
+            chipWork.setBackgroundResource(isWork ? R.drawable.bg_radius_pill_blue : R.drawable.bg_radius_pill_outline);
+            chipWork.setTextColor(isWork ? 0xFF1D4ED8 : 0xFF0F172A);
+
+            chipOther.setBackgroundResource(isOther ? R.drawable.bg_radius_pill_blue : R.drawable.bg_radius_pill_outline);
+            chipOther.setTextColor(isOther ? 0xFF1D4ED8 : 0xFF0F172A);
+        };
+        updateChipStyles.run();
+
+        String displayAddr = !currentGpsAddress.isEmpty() ? currentGpsAddress : String.format(Locale.getDefault(), "Lat: %.3f, Lon: %.3f", currentGpsLat, currentGpsLon);
+        tvAddressPreview.setText(displayAddr);
+
+        chipHome.setOnClickListener(v -> {
+            selectedTag[0] = "🏠";
+            etLabel.setText("Home");
+            updateChipStyles.run();
+        });
+        chipCollege.setOnClickListener(v -> {
+            selectedTag[0] = "🎓";
+            etLabel.setText("College");
+            updateChipStyles.run();
+        });
+        chipWork.setOnClickListener(v -> {
+            selectedTag[0] = "💼";
+            etLabel.setText("Work");
+            updateChipStyles.run();
+        });
+        chipOther.setOnClickListener(v -> {
+            selectedTag[0] = "📍";
+            etLabel.setText(!currentGpsSubLocality.isEmpty() ? currentGpsSubLocality : "My Spot");
+            updateChipStyles.run();
+        });
+
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+        btnConfirm.setOnClickListener(v -> {
+            String label = etLabel.getText().toString().trim();
+            if (label.isEmpty()) {
+                label = "Saved Place";
+            }
+
+            SavedLocation savedLocation = new SavedLocation(
+                    label,
+                    selectedTag[0],
+                    displayAddr,
+                    currentGpsSubLocality,
+                    currentGpsLocality,
+                    currentGpsPostalCode,
+                    currentGpsLat,
+                    currentGpsLon
+            );
+
+            SavedLocationManager.saveLocation(HomeActivity.this, savedLocation);
+            Toast.makeText(HomeActivity.this, "Saved " + label + " successfully! 📍", Toast.LENGTH_SHORT).show();
+            dialog.dismiss();
+            updatePlacesButtonBadge();
+            loadRadiusNewsTab();
+        });
+
+        dialog.show();
+    }
+
+    private void showSavedLocationsBottomSheet() {
+        SavedLocationsBottomSheetDialog bottomSheet = SavedLocationsBottomSheetDialog.newInstance(new SavedLocationsBottomSheetDialog.OnLocationChangeListener() {
+            @Override
+            public void onLocationChanged(SavedLocation location) {
+                if (location != null) {
+                    SavedLocationManager.setActiveSavedLocation(HomeActivity.this, location);
+                    loadRadiusNewsTab(false);
+                } else {
+                    SavedLocationManager.setActiveToLiveGps(HomeActivity.this);
+                    loadRadiusNewsTab(true);
+                }
+            }
+
+            @Override
+            public void onSaveCurrentSpotRequested() {
+                showSaveLocationDialog();
+            }
+
+            @Override
+            public void onSearchCustomAreaRequested() {
+                showSearchAreaDialog();
+            }
+        });
+        bottomSheet.show(getSupportFragmentManager(), "SavedLocationsBottomSheet");
+    }
+
+    private void showSearchAreaDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("🔍 Set Area / Coordinates");
+        builder.setMessage("Enter your area, neighborhood, or college:\n(e.g., Palam Vihar Gurgaon 122017 or Kapriwas BMU)");
+
+        final EditText input = new EditText(this);
+        input.setHint("e.g. Palam Vihar Gurgaon 122017");
+        input.setText("Palam Vihar Gurgaon 122017");
+        input.setSelection(input.getText().length());
+        input.setPadding(36, 24, 36, 24);
+        builder.setView(input);
+
+        builder.setPositiveButton("Set Area & Fetch News", (dialog, which) -> {
+            String query = input.getText().toString().trim();
+            if (query.isEmpty()) {
+                Toast.makeText(this, "Please enter an area name", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            Toast.makeText(this, "Detecting coordinates for " + query + "...", Toast.LENGTH_SHORT).show();
+            LocationHelper.geocodeAreaNameToCoordinates(this, query, query, "📍", new LocationHelper.OnGeocodeAreaResultListener() {
+                @Override
+                public void onAreaGeocoded(SavedLocation savedLocation) {
+                    SavedLocationManager.saveLocation(HomeActivity.this, savedLocation);
+                    SavedLocationManager.setActiveSavedLocation(HomeActivity.this, savedLocation);
+                    Toast.makeText(HomeActivity.this, "Set to: " + savedLocation.getAddressLine(), Toast.LENGTH_SHORT).show();
+                    loadRadiusNewsTab();
+                }
+
+                @Override
+                public void onGeocodeFailed(String errorMessage) {
+                    Toast.makeText(HomeActivity.this, errorMessage, Toast.LENGTH_LONG).show();
+                }
+            });
+        });
+
+        builder.setNegativeButton("Cancel", null);
+        builder.show();
+    }
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == LocationHelper.LOCATION_PERMISSION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "Location permission granted! Fetching 10 km radius news...", Toast.LENGTH_SHORT).show();
+                loadRadiusNewsTab();
+            } else {
+                Toast.makeText(this, "Location permission is required to detect news within 10 km radius.", Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
     // Method to remove the reported news from the list
     public void removeReportedNews(Article reportedArticle) {
+
         newsList.remove(reportedArticle);
         newsAdapter.notifyDataSetChanged();
     }

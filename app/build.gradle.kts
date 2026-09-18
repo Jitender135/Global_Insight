@@ -39,6 +39,7 @@ dependencies {
     implementation(libs.activity)
     implementation(libs.constraintlayout)
     implementation ("com.google.android.material:material:1.11.0") // or latest version
+    implementation("com.google.android.gms:play-services-location:21.3.0")
 
     // Firebase (use version catalog or hardcoded if needed)
     implementation(libs.firebase.auth.v2230)
