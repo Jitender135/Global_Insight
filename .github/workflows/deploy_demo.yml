@@ -35,7 +35,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run Android Unit Test Suite
-        run: ./gradlew test --stacktrace
+        run: ./gradlew :app:testDebugUnitTest --stacktrace
 
       - name: Build Android Debug APK
         run: ./gradlew assembleDebug --stacktrace
