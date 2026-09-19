@@ -91,16 +91,19 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder
 
                 String cat = news.getSpotlightCategory();
                 if (holder.tvSpotlightBadge != null) {
-                    holder.tvSpotlightBadge.setText(cat != null && !cat.isEmpty() ? "📢 " + cat.toUpperCase(Locale.getDefault()) : "📢 COMMUNITY NOTICE");
+                    String cleanCat = cat != null ? cat.replaceAll("[\\p{So}\\p{Cn}]", "").trim() : "";
+                    holder.tvSpotlightBadge.setText(!cleanCat.isEmpty() ? cleanCat.toUpperCase(Locale.getDefault()) : "COMMUNITY NOTICE");
                 }
 
                 String role = news.getAuthorRole();
                 if (holder.tvSpotlightRole != null) {
-                    holder.tvSpotlightRole.setText(role != null && !role.isEmpty() ? "✅ " + role : "✅ Verified Resident");
+                    String cleanRole = role != null ? role.replaceAll("[\\p{So}\\p{Cn}]", "").trim() : "";
+                    holder.tvSpotlightRole.setText(!cleanRole.isEmpty() ? cleanRole : "Verified Resident");
                 }
 
                 if (holder.tvSpotlightUrgency != null) {
                     if ("High".equalsIgnoreCase(news.getUrgency())) {
+                        holder.tvSpotlightUrgency.setText("Urgent");
                         holder.tvSpotlightUrgency.setVisibility(View.VISIBLE);
                     } else {
                         holder.tvSpotlightUrgency.setVisibility(View.GONE);
@@ -108,7 +111,7 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder
                 }
 
                 if (holder.btnSpotlightUpvote != null) {
-                    holder.btnSpotlightUpvote.setText("👍 " + news.getUpvotes() + " Upvotes");
+                    holder.btnSpotlightUpvote.setText(news.getUpvotes() + " Upvotes");
                     holder.btnSpotlightUpvote.setOnClickListener(v -> upvoteSpotlight(news, holder.btnSpotlightUpvote));
                 }
             } else {
@@ -386,7 +389,7 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder
         final int newCount = article.getUpvotes() + 1;
         article.setUpvotes(newCount);
         if (upvoteView != null) {
-            upvoteView.setText("👍 " + newCount + " Upvotes");
+            upvoteView.setText(newCount + " Upvotes");
             upvoteView.setEnabled(false);
             upvoteView.setAlpha(0.85f);
         }
@@ -411,7 +414,7 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder
                 int respCode = conn.getResponseCode();
                 if (respCode == 200) {
                     new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
-                        Toast.makeText(context, "Upvoted local notice 👍", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(context, "Upvoted local notice", Toast.LENGTH_SHORT).show();
                     });
                 }
             } catch (Exception ignored) {}

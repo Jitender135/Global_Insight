@@ -50,16 +50,22 @@
     <color name="pill_outline_text">#0F172A</color>
     <color name="delete_icon_tint">#EF4444</color>
 
-    <!-- Community Spotlight Colors (Day) -->
-    <color name="community_banner_bg">#FFF7ED</color>
-    <color name="community_banner_border">#FFEDD5</color>
-    <color name="community_icon_bg">#FFEDD5</color>
-    <color name="community_icon_tint">#EA580C</color>
-    <color name="community_title_text">#9A3412</color>
-    <color name="community_sub_text">#7C2D12</color>
-    <color name="community_btn_start">#EA580C</color>
-    <color name="community_btn_end">#F97316</color>
-    <color name="community_shield_bg">#ECFDF5</color>
-    <color name="community_shield_border">#A7F3D0</color>
-    <color name="community_shield_text">#065F46</color>
+    <!-- Community Spotlight Colors (Day) - Aligned with Global Insight Brand Palette -->
+    <color name="community_banner_bg">#F0F7FF</color>
+    <color name="community_banner_border">#BFDBFE</color>
+    <color name="community_icon_bg">#DBEAFE</color>
+    <color name="community_icon_tint">#2563EB</color>
+    <color name="community_title_text">#1E3A8A</color>
+    <color name="community_sub_text">#64748B</color>
+    <color name="community_btn_start">#2563EB</color>
+    <color name="community_btn_end">#1D4ED8</color>
+    <color name="community_shield_bg">#F0F7FF</color>
+    <color name="community_shield_border">#BFDBFE</color>
+    <color name="community_shield_text">#1D4ED8</color>
+    <color name="community_badge_bg">#2563EB</color>
+    <color name="community_role_bg">#F8FAFC</color>
+    <color name="community_role_border">#CBD5E1</color>
+    <color name="community_role_text">#334155</color>
+    <color name="community_urgent_bg">#DC2626</color>
+    <color name="community_ai_verified_text">#2563EB</color>
 </resources>

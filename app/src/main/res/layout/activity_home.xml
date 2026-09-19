@@ -341,18 +341,19 @@
                 android:clickable="true"
                 android:focusable="true">
 
-                <!-- Stylish Megaphone Icon in circular badge -->
+                <!-- Campaign Megaphone Icon in circular badge -->
                 <FrameLayout
                     android:layout_width="34dp"
                     android:layout_height="34dp"
                     android:background="@drawable/bg_community_icon_container">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
                         android:layout_gravity="center"
-                        android:text="📢"
-                        android:textSize="16sp" />
+                        android:src="@drawable/ic_campaign_vector"
+                        app:tint="@color/community_icon_tint"
+                        android:contentDescription="Campaign Notice" />
                 </FrameLayout>
 
                 <!-- 2-Line Headline & Context -->
@@ -367,7 +368,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Have a local update?"
+                        android:text="Have a Local Update?"
                         android:textColor="@color/community_title_text"
                         android:textSize="12.5sp"
                         android:textStyle="bold" />
@@ -376,14 +377,14 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="1dp"
-                        android:text="Broadcast health camps, road repairs &amp; mandi news (10km)"
+                        android:text="Broadcast medical camps, road repairs &amp; civic notices"
                         android:textColor="@color/community_sub_text"
                         android:textSize="11sp"
                         android:singleLine="true"
                         android:ellipsize="end" />
                 </LinearLayout>
 
-                <!-- Elevated Gradient Action Button -->
+                <!-- Elevated Brand Blue Action Button -->
                 <TextView
                     android:id="@+id/btnPostCommunityNotice"
                     android:layout_width="wrap_content"
@@ -391,8 +392,8 @@
                     android:background="@drawable/bg_community_btn_gradient"
                     android:elevation="1.5dp"
                     android:gravity="center"
-                    android:paddingHorizontal="12dp"
-                    android:text="Post ✍️"
+                    android:paddingHorizontal="14dp"
+                    android:text="Post Notice"
                     android:textColor="#FFFFFF"
                     android:textSize="12sp"
                     android:textStyle="bold"

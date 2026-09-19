@@ -335,14 +335,14 @@ async def moderate_community_notice(
         "- Unverified panic-mongering, violent threats, false emergency hoaxes.\n"
         "- Unrelated personal rants or completely nonsensical gibberish.\n\n"
         "CATEGORIES (choose exactly one):\n"
-        "- 🏥 Health & Blood Camp\n"
-        "- 🚧 Traffic & Road Repair\n"
-        "- 📢 Panchayat & Civic Notice\n"
-        "- ⚡ Power & Water Schedule\n"
-        "- 🌾 Agriculture & Mandi\n"
-        "- 🎓 School & Student Notice\n"
-        "- 🚨 Emergency Alert\n"
-        "- 🎉 Local Culture & Events\n\n"
+        "- Health & Medical Camp\n"
+        "- Traffic & Road Repair\n"
+        "- Panchayat & Civic Notice\n"
+        "- Power & Water Schedule\n"
+        "- Agriculture & Mandi\n"
+        "- School & Student Notice\n"
+        "- Emergency Alert\n"
+        "- Local Culture & Events\n\n"
         "WORD LIMIT:\n"
         "- Ensure polished_content is STRICTLY 60 words or fewer, direct, and easy to read on mobile.\n\n"
         "RESPONSE FORMAT:\n"
@@ -350,7 +350,7 @@ async def moderate_community_notice(
         "{\n"
         '  "approved": true,\n'
         '  "rejection_reason": "",\n'
-        '  "category": "🏥 Health & Blood Camp",\n'
+        '  "category": "Health & Medical Camp",\n'
         '  "polished_title": "Polished concise title",\n'
         '  "polished_content": "Crisp informative notice text strictly under 60 words.",\n'
         '  "urgency": "Normal"\n'

@@ -1927,22 +1927,22 @@ public class HomeActivity extends AppCompatActivity {
             if (tvWordCount != null) {
                 tvWordCount.setText(words + " / 60 words");
                 if (words == 0) {
-                    tvWordCount.setTextColor(android.graphics.Color.parseColor("#94A3B8"));
+                    tvWordCount.setTextColor(android.graphics.Color.parseColor("#64748B"));
                     if (tvWordLimitWarning != null) tvWordLimitWarning.setVisibility(View.GONE);
                     btnSubmitNotice.setEnabled(true);
                     btnSubmitNotice.setAlpha(1.0f);
                 } else if (words <= 45) {
-                    tvWordCount.setTextColor(android.graphics.Color.parseColor("#16A34A")); // Green
+                    tvWordCount.setTextColor(android.graphics.Color.parseColor("#2563EB")); // Global Insight Brand Blue
                     if (tvWordLimitWarning != null) tvWordLimitWarning.setVisibility(View.GONE);
                     btnSubmitNotice.setEnabled(true);
                     btnSubmitNotice.setAlpha(1.0f);
                 } else if (words <= 60) {
-                    tvWordCount.setTextColor(android.graphics.Color.parseColor("#D97706")); // Amber
+                    tvWordCount.setTextColor(android.graphics.Color.parseColor("#D97706")); // Amber warning
                     if (tvWordLimitWarning != null) tvWordLimitWarning.setVisibility(View.GONE);
                     btnSubmitNotice.setEnabled(true);
                     btnSubmitNotice.setAlpha(1.0f);
                 } else {
-                    tvWordCount.setTextColor(android.graphics.Color.parseColor("#DC2626")); // Red
+                    tvWordCount.setTextColor(android.graphics.Color.parseColor("#DC2626")); // Red error
                     if (tvWordLimitWarning != null) tvWordLimitWarning.setVisibility(View.VISIBLE);
                     btnSubmitNotice.setEnabled(false);
                     btnSubmitNotice.setAlpha(0.6f);
@@ -2098,14 +2098,14 @@ public class HomeActivity extends AppCompatActivity {
                 final String reason = rejectionReason;
 
                 runOnUiThread(() -> {
-                    btnSubmitNotice.setText("🚀 Verify with Groq AI & Publish");
+                    btnSubmitNotice.setText("Verify & Publish Notice");
                     btnSubmitNotice.setEnabled(true);
                     if (pbSubmitNotice != null) pbSubmitNotice.setVisibility(View.GONE);
 
                     if (success) {
                         dialog.dismiss();
                         new AlertDialog.Builder(HomeActivity.this)
-                                .setTitle("✅ Notice Verified & Published!")
+                                .setTitle("Notice Verified & Published")
                                 .setMessage(msg + "\n\nYour spotlight is now live for all residents in your 10 km circle.")
                                 .setPositiveButton("View in Feed", (d, w) -> {
                                     tabArticleCache.clear();

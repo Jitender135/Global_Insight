@@ -1,5 +1,28 @@
 [
   {
+    "id": "spotlight_1789811569_c9bc7e",
+    "title": "Free Health & Eye Checkup Camp at Local Dispensary",
+    "content": "A free health and eye checkup camp is organized this Sunday from 9 AM to 2 PM at the local dispensary. Doctors will provide free consultations and basic medicine. All residents are welcome.",
+    "polished_title": "Free Health & Eye Camp at Palam Vihar Dispensary",
+    "polished_content": "Join the free health and eye checkup camp this Sunday, 9 AM–2 PM, at the Palam Vihar local dispensary. Doctors offer free consultations and basic medicines. All residents are welcome to attend.",
+    "author_name": "Community Member",
+    "author_role": "Doctor / PHC",
+    "category": "🏥 Health & Blood Camp",
+    "village": "Palam Vihar",
+    "tehsil": "Gurgaon Division",
+    "district": "Gurugram",
+    "state": "Haryana",
+    "lat": 28.5085,
+    "lon": 77.0326,
+    "created_at": "Just now",
+    "timestamp": 1789811569.6204844,
+    "urgency": "Normal",
+    "upvotes": 1,
+    "verified_by_ai": true,
+    "ai_model": "Groq AI Content Guard",
+    "status": "active"
+  },
+  {
     "id": "spotlight_1789809582_30b86e",
     "title": "Free Health & Eye Checkup Camp at Local Dispensary",
     "content": "A free health and eye checkup camp is organized this Sunday from 9 AM to 2 PM at the local dispensary. Doctors will provide free consultations and basic medicine. All residents are welcome.",
@@ -7,7 +30,7 @@
     "polished_content": "Join the free health and eye checkup camp this Sunday, 9 AM–2 PM, at the Palam Vihar local dispensary. Doctors will offer free consultations and basic medicines. All residents are welcome to attend.",
     "author_name": "Community Member",
     "author_role": "Doctor / PHC",
-    "category": "🏥 Health & Blood Camp",
+    "category": "Health & Medical Camp",
     "village": "Palam Vihar",
     "tehsil": "Gurgaon Division",
     "district": "Gurugram",
@@ -19,7 +42,7 @@
     "urgency": "Normal",
     "upvotes": 1,
     "verified_by_ai": true,
-    "ai_model": "Groq AI Content Guard",
+    "ai_model": "AI Content Verification",
     "status": "active"
   },
   {
@@ -30,7 +53,7 @@
     "polished_content": "The Panchayat invites all residents to a free health and eye checkup camp this Sunday, 9 AM–2 PM, at the Sector 22 Dispensary. Qualified doctors will be present. No registration required. Please bring your ID proof.",
     "author_name": "Community Member",
     "author_role": "Panchayat Member",
-    "category": "🏥 Health & Blood Camp",
+    "category": "Health & Medical Camp",
     "village": "Palam Vihar",
     "tehsil": "Gurgaon Division",
     "district": "Gurugram",
@@ -42,7 +65,7 @@
     "urgency": "Normal",
     "upvotes": 1,
     "verified_by_ai": true,
-    "ai_model": "Groq AI Content Guard",
+    "ai_model": "AI Content Verification",
     "status": "active"
   },
   {
@@ -53,7 +76,7 @@
     "polished_content": "Lions Club is organizing a free eye and dental checkup camp this Sunday from 9 AM to 3 PM at Primary Health Centre, Farrukhnagar. Free cataract consultation and medicines will be distributed.",
     "author_name": "Dr. Amit Yadav",
     "author_role": "Verified Resident",
-    "category": "🏥 Health & Blood Camp",
+    "category": "Health & Medical Camp",
     "village": "Kharkhari",
     "tehsil": "Farrukhnagar",
     "district": "Gurugram",
@@ -65,7 +88,7 @@
     "urgency": "Normal",
     "upvotes": 19,
     "verified_by_ai": true,
-    "ai_model": "Groq AI Content Guard",
+    "ai_model": "AI Content Verification",
     "status": "active"
   },
   {
@@ -76,7 +99,7 @@
     "polished_content": "Flyover joint repair underway on NH-48 towards Jaipur. Heavy traffic diverted via service lane near Rajiv Chowk for 48 hours. Commuters advised to use alternate routes.",
     "author_name": "Rohit Verma",
     "author_role": "Verified Resident",
-    "category": "🚧 Traffic & Road Repair",
+    "category": "Traffic & Road Repair",
     "village": "Gurugram",
     "tehsil": "Gurugram",
     "district": "Gurugram",
@@ -88,7 +111,7 @@
     "urgency": "High",
     "upvotes": 43,
     "verified_by_ai": true,
-    "ai_model": "Groq AI Content Guard",
+    "ai_model": "AI Content Verification",
     "status": "active"
   },
   {
@@ -99,7 +122,7 @@
     "polished_content": "Farrukhnagar Anaaj Mandi will commence government MSP procurement for mustard from Monday 8 AM. Farmers must bring Meri Fasal Mera Byora registration slips.",
     "author_name": "Gram Panchayat Sachiv",
     "author_role": "Panchayat Member",
-    "category": "🌾 Agriculture & Mandi",
+    "category": "Agriculture & Mandi",
     "village": "Kharkhari",
     "tehsil": "Farrukhnagar",
     "district": "Gurugram",
@@ -111,7 +134,7 @@
     "urgency": "Normal",
     "upvotes": 29,
     "verified_by_ai": true,
-    "ai_model": "Groq AI Content Guard",
+    "ai_model": "AI Content Verification",
     "status": "active"
   }
 ]

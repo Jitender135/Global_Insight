@@ -213,7 +213,7 @@ async def post_community_notice(req: CommunityPostRequest):
         "urgency": mod_result.get("urgency") or "Normal",
         "upvotes": 1,
         "verified_by_ai": True,
-        "ai_model": "Groq AI Content Guard",
+        "ai_model": "AI Content Verification",
         "status": "active"
     }
 
@@ -225,7 +225,7 @@ async def post_community_notice(req: CommunityPostRequest):
         "status": "approved",
         "approved": True,
         "spotlight": new_spotlight,
-        "message": f"Verified by Groq AI as {new_spotlight['category']} and broadcasted live!"
+        "message": f"Notice verified as {new_spotlight['category']} and broadcasted live."
     }
 
 

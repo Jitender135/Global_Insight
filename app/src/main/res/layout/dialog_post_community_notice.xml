@@ -31,7 +31,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="📢 Post Community Notice"
+                android:text="Post Community Notice"
                 android:textColor="?android:attr/textColorPrimary"
                 android:textSize="19sp"
                 android:textStyle="bold" />
@@ -75,8 +75,8 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="🟢 LIVE GPS BROADCAST (10 KM)"
-                    android:textColor="#16A34A"
+                    android:text="LIVE GPS BROADCAST (10 KM)"
+                    android:textColor="@color/text_accent"
                     android:textSize="10.5sp"
                     android:textStyle="bold"
                     android:letterSpacing="0.04" />
@@ -100,7 +100,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="⚡ Quick Starters (Tap to fill)"
+            android:text="Quick Templates"
             android:textColor="?android:attr/textColorSecondary"
             android:textSize="12sp"
             android:textStyle="bold" />
@@ -123,7 +123,7 @@
                     android:background="@drawable/bg_community_template_chip"
                     android:clickable="true"
                     android:focusable="true"
-                    android:text="🏥 Medical Camp"
+                    android:text="Medical Camp"
                     android:textColor="?attr/colorPrimary"
                     android:textSize="11.5sp"
                     android:textStyle="bold" />
@@ -136,7 +136,7 @@
                     android:background="@drawable/bg_community_template_chip"
                     android:clickable="true"
                     android:focusable="true"
-                    android:text="🚧 Road Diversion"
+                    android:text="Road Diversion"
                     android:textColor="?attr/colorPrimary"
                     android:textSize="11.5sp"
                     android:textStyle="bold" />
@@ -149,7 +149,7 @@
                     android:background="@drawable/bg_community_template_chip"
                     android:clickable="true"
                     android:focusable="true"
-                    android:text="⚡ Power Outage"
+                    android:text="Power Outage"
                     android:textColor="?attr/colorPrimary"
                     android:textSize="11.5sp"
                     android:textStyle="bold" />
@@ -162,7 +162,7 @@
                     android:background="@drawable/bg_community_template_chip"
                     android:clickable="true"
                     android:focusable="true"
-                    android:text="🌾 Mandi Procurement"
+                    android:text="Grain Mandi"
                     android:textColor="?attr/colorPrimary"
                     android:textSize="11.5sp"
                     android:textStyle="bold" />
@@ -198,7 +198,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:checked="true"
-                    android:text="🏠 Verified Resident"
+                    android:text="Verified Resident"
                     android:textSize="12sp" />
 
                 <com.google.android.material.chip.Chip
@@ -206,7 +206,7 @@
                     style="@style/Widget.MaterialComponents.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="🏛️ Panchayat Member"
+                    android:text="Panchayat Member"
                     android:textSize="12sp" />
 
                 <com.google.android.material.chip.Chip
@@ -214,7 +214,7 @@
                     style="@style/Widget.MaterialComponents.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="🎓 Student"
+                    android:text="Student"
                     android:textSize="12sp" />
 
                 <com.google.android.material.chip.Chip
@@ -222,7 +222,7 @@
                     style="@style/Widget.MaterialComponents.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="🩺 Doctor / PHC"
+                    android:text="Doctor / PHC"
                     android:textSize="12sp" />
 
                 <com.google.android.material.chip.Chip
@@ -230,7 +230,7 @@
                     style="@style/Widget.MaterialComponents.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="🏪 Local Merchant"
+                    android:text="Local Merchant"
                     android:textSize="12sp" />
             </com.google.android.material.chip.ChipGroup>
         </HorizontalScrollView>
@@ -307,13 +307,13 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="⚠️ Notice exceeds 60 words. Please shorten for instant mobile reading."
+            android:text="Notice exceeds 60 words limit. Please shorten for submission."
             android:textColor="#EF4444"
             android:textSize="11.5sp"
             android:textStyle="bold"
             android:visibility="gone" />
 
-        <!-- Groq AI Content Guard Trust Shield Card -->
+        <!-- Content Verification Guard Trust Shield Card -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -322,11 +322,12 @@
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="🛡️"
-                android:textSize="20sp" />
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_verified_shield"
+                app:tint="@color/community_shield_text"
+                android:contentDescription="Verification Shield" />
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -338,7 +339,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Groq AI Content Guard (Real-Time)"
+                    android:text="Content Verification Guard"
                     android:textColor="@color/community_shield_text"
                     android:textSize="12sp"
                     android:textStyle="bold" />
@@ -347,7 +348,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="1dp"
-                    android:text="Every submission is screened in sub-second inference for authenticity, safety, and profanity prevention."
+                    android:text="Submissions are screened in real time to verify civic relevance, safety, and authenticity."
                     android:textColor="@color/community_shield_text"
                     android:textSize="11sp" />
             </LinearLayout>
@@ -367,7 +368,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="⚠️ AI Moderation Feedback"
+                android:text="Moderation Notice"
                 android:textColor="#FFFFFF"
                 android:textSize="12.5sp"
                 android:textStyle="bold" />
@@ -398,7 +399,7 @@
                 android:elevation="2dp"
                 android:focusable="true"
                 android:gravity="center"
-                android:text="🚀 Verify with Groq AI &amp; Publish"
+                android:text="Verify &amp; Publish Notice"
                 android:textColor="#FFFFFF"
                 android:textSize="14sp"
                 android:textStyle="bold" />
