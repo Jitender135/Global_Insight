@@ -9,6 +9,11 @@ public class Article {
     private String url;
     private String urlToImage;
     private String publishedAt;
+    private boolean isVernacular;
+    private String vernacularBadge;
+    private String originalTitle;
+    private String originalDescription;
+    private String vernacularSource;
 
     public String getId() {
         return id;
@@ -72,5 +77,45 @@ public class Article {
 
     public void setPublishedAt(String publishedAt) {
         this.publishedAt = publishedAt;
+    }
+
+    public boolean isVernacular() {
+        return isVernacular;
+    }
+
+    public void setVernacular(boolean vernacular) {
+        isVernacular = vernacular;
+    }
+
+    public String getVernacularBadge() {
+        return vernacularBadge;
+    }
+
+    public void setVernacularBadge(String vernacularBadge) {
+        this.vernacularBadge = vernacularBadge;
+    }
+
+    public String getOriginalTitle() {
+        return originalTitle;
+    }
+
+    public void setOriginalTitle(String originalTitle) {
+        this.originalTitle = originalTitle;
+    }
+
+    public String getOriginalDescription() {
+        return originalDescription;
+    }
+
+    public void setOriginalDescription(String originalDescription) {
+        this.originalDescription = originalDescription;
+    }
+
+    public String getVernacularSource() {
+        return vernacularSource;
+    }
+
+    public void setVernacularSource(String vernacularSource) {
+        this.vernacularSource = vernacularSource;
     }
 }

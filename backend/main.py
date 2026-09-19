@@ -9,6 +9,7 @@ load_dotenv()
 load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
 from grok_service import generate_suggested_questions, answer_story_question
+from ai_service import translate_vernacular_articles
 from cache_manager import cache_manager
 
 app = FastAPI(
@@ -84,7 +85,7 @@ DEFAULT_LOCAL_IMAGES = [
     "https://images.unsplash.com/photo-1476242906366-d8eb64c2f661?w=800&auto=format&fit=crop&q=80"
 ]
 
-def _fetch_google_news_rss(search_query: str, sublocality: str = "", locality: str = "", max_items: int = 40):
+def _fetch_google_news_rss(search_query: str, sublocality: str = "", locality: str = "", max_items: int = 40, lang: str = "en"):
     import urllib.parse
     import urllib.request
     import xml.etree.ElementTree as ET
@@ -93,7 +94,11 @@ def _fetch_google_news_rss(search_query: str, sublocality: str = "", locality: s
 
     try:
         encoded_query = urllib.parse.quote(search_query)
-        rss_url = f"https://news.google.com/rss/search?q={encoded_query}&hl=en-IN&gl=IN&ceid=IN:en"
+        if lang == "hi":
+            rss_url = f"https://news.google.com/rss/search?q={encoded_query}&hl=hi&gl=IN&ceid=IN:hi"
+        else:
+            rss_url = f"https://news.google.com/rss/search?q={encoded_query}&hl=en-IN&gl=IN&ceid=IN:en"
+
         req = urllib.request.Request(
             rss_url,
             headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
@@ -112,7 +117,7 @@ def _fetch_google_news_rss(search_query: str, sublocality: str = "", locality: s
             raw_desc = item.find("description").text if item.find("description") is not None else ""
             
             source_elem = item.find("source")
-            source_name = source_elem.text if source_elem is not None else "Local News"
+            source_name = source_elem.text if source_elem is not None else ("Hindi Press" if lang == "hi" else "Local News")
 
             clean_title = raw_title
             if " - " in raw_title:
@@ -139,12 +144,12 @@ def _fetch_google_news_rss(search_query: str, sublocality: str = "", locality: s
             })
         return articles
     except Exception as e:
-        print(f"Error fetching Google News RSS for '{search_query}': {e}")
+        print(f"Error fetching Google News RSS for '{search_query}' (lang={lang}): {e}")
         return []
 
 
 @app.get("/api/radius-news")
-def get_radius_news(
+async def get_radius_news(
     lat: Optional[float] = None,
     lon: Optional[float] = None,
     village: Optional[str] = "",
@@ -155,14 +160,14 @@ def get_radius_news(
     locality: Optional[str] = "",
     postal_code: Optional[str] = "",
     query: Optional[str] = "",
-    radius: Optional[int] = 10
+    radius: Optional[int] = 10,
+    target_lang: Optional[str] = "en"
 ):
     """
-    Fetches real-time hyper-local news with Hierarchical Administrative Geo-Stepping:
-    Level 1: Village / Colony / Immediate Neighborhood
-    Level 2: Tehsil / Block / Sub-District (if village has < 5 stories)
-    Level 3: District Rural & Urban Belt (if tehsil has < 5 stories)
-    Level 4: State / Regional News
+    Fetches real-time hyper-local news with:
+    1. Hierarchical Administrative Geo-Stepping (Village -> Tehsil -> District -> State)
+    2. Vernacular Press Aggregation (Dainik Jagran, Amar Ujala, Dainik Bhaskar)
+    3. Groq AI High-Speed Translation into crisp English briefings
     """
     try:
         village_name = (village or sublocality or "").strip()
@@ -204,8 +209,9 @@ def get_radius_news(
             query_parts.append(postal_code.strip())
 
         query_level1 = " ".join(query_parts) if query_parts else (district_name or "India") + " local news"
-        level1_articles = _fetch_google_news_rss(query_level1, village_name, district_name)
-        _merge_articles(level1_articles)
+        # Fetch both English and Vernacular (Hindi) local feeds
+        _merge_articles(_fetch_google_news_rss(query_level1, village_name, district_name, lang="en"))
+        _merge_articles(_fetch_google_news_rss(query_level1, village_name, district_name, lang="hi"))
 
         # -------------------------------------------------------------
         # Level 2: Tehsil / Block / Sub-District Auto-Stepping (< 5 stories)
@@ -221,8 +227,8 @@ def get_radius_news(
                 tehsil_parts.append(district_name)
             query_level2 = " ".join(tehsil_parts) + " news"
 
-            level2_articles = _fetch_google_news_rss(query_level2, tehsil_name, district_name)
-            _merge_articles(level2_articles)
+            _merge_articles(_fetch_google_news_rss(query_level2, tehsil_name, district_name, lang="en"))
+            _merge_articles(_fetch_google_news_rss(query_level2, tehsil_name, district_name, lang="hi"))
 
         # -------------------------------------------------------------
         # Level 3: District Rural & Urban Belt Auto-Stepping (< 5 stories)
@@ -235,8 +241,8 @@ def get_radius_news(
             expansion_reason = f"Expanded to District {district_name} (20 km radius) to bring you surrounding local updates"
 
             query_level3 = f"{district_name} news"
-            level3_articles = _fetch_google_news_rss(query_level3, village_name or tehsil_name, district_name)
-            _merge_articles(level3_articles)
+            _merge_articles(_fetch_google_news_rss(query_level3, village_name or tehsil_name, district_name, lang="en"))
+            _merge_articles(_fetch_google_news_rss(query_level3, village_name or tehsil_name, district_name, lang="hi"))
 
         # -------------------------------------------------------------
         # Level 4: State Regional Safety Net (< 5 stories)
@@ -249,13 +255,19 @@ def get_radius_news(
             expansion_reason = f"Expanded to {state_name} regional news"
 
             query_level4 = f"{state_name} local news"
-            level4_articles = _fetch_google_news_rss(query_level4, "", state_name)
-            _merge_articles(level4_articles)
+            _merge_articles(_fetch_google_news_rss(query_level4, "", state_name, lang="en"))
+            _merge_articles(_fetch_google_news_rss(query_level4, "", state_name, lang="hi"))
 
         # Fallback if still 0
         if not articles:
-            level_fallback = _fetch_google_news_rss("India local news", "", "")
-            _merge_articles(level_fallback)
+            _merge_articles(_fetch_google_news_rss("India local news", "", "", lang="en"))
+            _merge_articles(_fetch_google_news_rss("India local news", "", "", lang="hi"))
+
+        # Translate vernacular stories via Groq AI
+        if articles:
+            articles = await translate_vernacular_articles(articles, target_lang=target_lang or "en")
+            for idx, item in enumerate(articles):
+                item["id"] = str(idx + 1)
 
         display_area = village_name
         if geo_level == "tehsil":

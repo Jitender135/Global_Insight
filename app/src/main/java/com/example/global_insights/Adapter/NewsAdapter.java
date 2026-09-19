@@ -87,6 +87,34 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder
         String sourceName = news.getSource() != null && news.getSource().getName() != null && !news.getSource().getName().isEmpty() ? news.getSource().getName() : "Global News";
         holder.sourceTag.setText(sourceName);
 
+        if (holder.vernacularBadge != null) {
+            if (news.isVernacular()) {
+                String badgeText = news.getVernacularBadge();
+                if (badgeText == null || badgeText.isEmpty()) {
+                    badgeText = "🌐 Translated from Hindi";
+                }
+                holder.vernacularBadge.setText(badgeText);
+                holder.vernacularBadge.setVisibility(View.VISIBLE);
+
+                final String origTitle = news.getOriginalTitle();
+                final String origDesc = news.getOriginalDescription();
+                holder.vernacularBadge.setOnClickListener(v -> {
+                    if (origTitle != null && !origTitle.isEmpty()) {
+                        new androidx.appcompat.app.AlertDialog.Builder(context)
+                                .setTitle("Original Hindi Press Report")
+                                .setMessage(origTitle + (origDesc != null && !origDesc.isEmpty() ? "\n\n" + origDesc : ""))
+                                .setPositiveButton("Close", null)
+                                .show();
+                    } else {
+                        android.widget.Toast.makeText(context, "Hyper-local story translated from regional press", android.widget.Toast.LENGTH_SHORT).show();
+                    }
+                });
+            } else {
+                holder.vernacularBadge.setVisibility(View.GONE);
+                holder.vernacularBadge.setOnClickListener(null);
+            }
+        }
+
         String publishedAt = news.getPublishedAt();
         String timeAgo = getRelativeTimeSpan(publishedAt);
         if (holder.publishedTime != null) {
@@ -290,7 +318,7 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder
 
     public static class NewsViewHolder extends RecyclerView.ViewHolder {
         androidx.cardview.widget.CardView cardView;
-        TextView title, description, readMore, sourceTag, publishedTime, newsFooter;
+        TextView title, description, readMore, sourceTag, vernacularBadge, publishedTime, newsFooter;
         ImageView bookmarkIcon, newsImage, shareIcon, audioButton;
         View btnAskStory;
 
@@ -301,6 +329,7 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder
             description = itemView.findViewById(R.id.newsDescription);
             readMore = itemView.findViewById(R.id.readMore);
             sourceTag = itemView.findViewById(R.id.sourceTag);
+            vernacularBadge = itemView.findViewById(R.id.vernacularBadge);
             publishedTime = itemView.findViewById(R.id.publishedTime);
             newsFooter = itemView.findViewById(R.id.newsFooter);
             bookmarkIcon = itemView.findViewById(R.id.bookmarkIcon);

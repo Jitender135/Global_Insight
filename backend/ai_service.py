@@ -1,6 +1,8 @@
 import os
 import json
 import httpx
+import asyncio
+import re
 from typing import Dict, Any, List
 from dotenv import load_dotenv
 
@@ -169,3 +171,123 @@ async def answer_story_question(
         "sources": sources,
         "follow_ups": follow_ups
     }
+
+
+def is_vernacular_text(text: str) -> bool:
+    """Checks if text contains Devanagari or other Indic script characters."""
+    if not text:
+        return False
+    # Devanagari Unicode range: \u0900 to \u097F
+    return bool(re.search(r"[\u0900-\u097F]", text))
+
+
+async def translate_vernacular_story(
+    title: str,
+    description: str,
+    source_name: str,
+    target_lang: str = "en"
+) -> Dict[str, str]:
+    """
+    Translates a vernacular news story into crisp English using Groq free AI models.
+    Preserves exact village/town, person, and organizational names.
+    """
+    system_prompt = (
+        "You are an expert bilingual news editor for Global Insight.\n"
+        "Translate the following vernacular/Hindi hyper-local news story into crisp, fluent, professional English.\n"
+        "Maintain journalistic accuracy, retaining exact village, person, and organization names.\n"
+        "Respond in strict JSON format with exactly two keys: 'translated_title' and 'translated_description' (2-3 crisp sentences).\n"
+        'Example output: {"translated_title": "...", "translated_description": "..."}'
+    )
+    prompt = f"Source: {source_name}\nVernacular Title: {title}\nVernacular Description: {description}"
+
+    try:
+        raw_res = await call_free_ai_api(prompt, system_prompt)
+        if "{" in raw_res and "}" in raw_res:
+            start = raw_res.find("{")
+            end = raw_res.rfind("}") + 1
+            data = json.loads(raw_res[start:end])
+            t_title = (data.get("translated_title") or "").strip()
+            t_desc = (data.get("translated_description") or "").strip()
+            if t_title:
+                return {
+                    "translated_title": t_title,
+                    "translated_description": t_desc or description
+                }
+    except Exception as e:
+        print(f"Vernacular translation error: {e}")
+
+    return {
+        "translated_title": title,
+        "translated_description": description
+    }
+
+
+async def translate_vernacular_articles(
+    articles: List[Dict[str, Any]],
+    target_lang: str = "en",
+    max_to_translate: int = 12
+) -> List[Dict[str, Any]]:
+    """
+    Processes a list of articles, detecting vernacular (Hindi) stories and
+    translating them into English (or preserving native Hindi if target_lang=='hi').
+    Attaches vernacular badges and original text.
+    """
+    vernacular_tasks = []
+    task_indices = []
+
+    for idx, article in enumerate(articles):
+        title = article.get("title", "")
+        desc = article.get("description", "")
+        src_obj = article.get("source") or {}
+        src_name = src_obj.get("name") if isinstance(src_obj, dict) else str(src_obj)
+
+        is_hindi = is_vernacular_text(title) or is_vernacular_text(desc)
+        if is_hindi:
+            article["isVernacular"] = True
+            article["originalTitle"] = title
+            article["originalDescription"] = desc
+            article["vernacularSource"] = src_name or "Hindi Press"
+
+            if target_lang != "hi" and len(vernacular_tasks) < max_to_translate:
+                vernacular_tasks.append(
+                    translate_vernacular_story(title, desc, src_name or "Hindi Press", target_lang)
+                )
+                task_indices.append(idx)
+            else:
+                article["vernacularBadge"] = f"Hindi Press • {src_name}"
+        else:
+            article["isVernacular"] = False
+            article["vernacularBadge"] = None
+            article["originalTitle"] = None
+            article["originalDescription"] = None
+
+    if vernacular_tasks:
+        try:
+            # Run parallel translations with a 15-second total timeout
+            results = await asyncio.wait_for(
+                asyncio.gather(*vernacular_tasks, return_exceptions=True),
+                timeout=15.0
+            )
+            for task_idx, result in zip(task_indices, results):
+                if isinstance(result, dict) and result.get("translated_title"):
+                    art = articles[task_idx]
+                    trans_title = result["translated_title"]
+                    trans_desc = result.get("translated_description", art.get("description", ""))
+                    src_name = art.get("vernacularSource", "Hindi Press")
+
+                    art["title"] = trans_title
+                    art["description"] = trans_desc
+                    art["vernacularBadge"] = f"Translated from Hindi • {src_name}"
+                elif isinstance(result, dict):
+                    art = articles[task_idx]
+                    src_name = art.get("vernacularSource", "Hindi Press")
+                    art["vernacularBadge"] = f"Hindi Press • {src_name}"
+        except Exception as e:
+            print(f"Batch vernacular translation timed out or failed: {e}")
+            for task_idx in task_indices:
+                art = articles[task_idx]
+                src_name = art.get("vernacularSource", "Hindi Press")
+                art["vernacularBadge"] = f"Hindi Press • {src_name}"
+
+    return articles
+

@@ -1517,6 +1517,9 @@ public class HomeActivity extends AppCompatActivity {
         executor.execute(() -> {
             boolean backendSuccess = false;
             try {
+                SharedPreferences preferences = getSharedPreferences("user_preferences", MODE_PRIVATE);
+                String targetLang = preferences.getString("selected_language", "en");
+
                 String backendBase = "http://10.0.2.2:8080";
                 StringBuilder urlBuilder = new StringBuilder(backendBase + "/api/radius-news?");
                 if (lat != 0.0) urlBuilder.append("lat=").append(lat).append("&");
@@ -1536,13 +1539,13 @@ public class HomeActivity extends AppCompatActivity {
                 if (postalCode != null && !postalCode.isEmpty()) {
                     urlBuilder.append("postal_code=").append(URLEncoder.encode(postalCode, "UTF-8")).append("&");
                 }
-                urlBuilder.append("radius=10");
+                urlBuilder.append("radius=10&target_lang=").append(URLEncoder.encode(targetLang, "UTF-8"));
 
                 URL url = new URL(urlBuilder.toString());
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
                 conn.setConnectTimeout(6000);
-                conn.setReadTimeout(10000);
+                conn.setReadTimeout(18000);
 
                 if (conn.getResponseCode() == 200) {
                     BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8));
