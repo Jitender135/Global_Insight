@@ -49,4 +49,17 @@
     <color name="pill_outline_stroke">#E2E8F0</color>
     <color name="pill_outline_text">#0F172A</color>
     <color name="delete_icon_tint">#EF4444</color>
+
+    <!-- Community Spotlight Colors (Day) -->
+    <color name="community_banner_bg">#FFF7ED</color>
+    <color name="community_banner_border">#FFEDD5</color>
+    <color name="community_icon_bg">#FFEDD5</color>
+    <color name="community_icon_tint">#EA580C</color>
+    <color name="community_title_text">#9A3412</color>
+    <color name="community_sub_text">#7C2D12</color>
+    <color name="community_btn_start">#EA580C</color>
+    <color name="community_btn_end">#F97316</color>
+    <color name="community_shield_bg">#ECFDF5</color>
+    <color name="community_shield_border">#A7F3D0</color>
+    <color name="community_shield_text">#065F46</color>
 </resources>

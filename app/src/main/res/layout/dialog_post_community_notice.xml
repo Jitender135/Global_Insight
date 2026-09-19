@@ -11,13 +11,14 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <!-- Handle bar -->
+        <!-- Modern Handle Bar -->
         <View
-            android:layout_width="40dp"
-            android:layout_height="4dp"
+            android:layout_width="44dp"
+            android:layout_height="4.5dp"
             android:layout_gravity="center_horizontal"
             android:layout_marginBottom="16dp"
-            android:background="#D1D5DB" />
+            android:background="@drawable/bg_bottom_sheet_rounded"
+            android:backgroundTint="@color/sheet_handle" />
 
         <!-- Header Row -->
         <LinearLayout
@@ -51,48 +52,129 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="Broadcast public alerts, health camps, traffic diversions, or civic updates to residents in your 10 km radius."
+            android:text="Broadcast health camps, road repairs, traffic diversions, or civic alerts to residents in your 10 km circle."
             android:textColor="?android:attr/textColorSecondary"
             android:textSize="13sp" />
 
-        <!-- Target Location Tag -->
+        <!-- Target Location Card with Live Indicator -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="14dp"
             android:background="@drawable/bg_saved_location_card_normal"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingHorizontal="12dp"
-            android:paddingVertical="8dp">
+            android:orientation="vertical"
+            android:paddingHorizontal="14dp"
+            android:paddingVertical="10dp">
 
-            <TextView
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="📍 Broadcasting To: "
-                android:textColor="?android:attr/textColorSecondary"
-                android:textSize="12sp"
-                android:textStyle="bold" />
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🟢 LIVE GPS BROADCAST (10 KM)"
+                    android:textColor="#16A34A"
+                    android:textSize="10.5sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.04" />
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/tvPostNoticeLocation"
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:ellipsize="end"
-                android:singleLine="true"
-                android:text="Detecting area..."
-                android:textColor="@color/blue"
-                android:textSize="12sp"
-                android:textStyle="bold" />
+                android:layout_marginTop="3dp"
+                android:text="Detecting your neighborhood..."
+                android:textColor="@color/text_primary"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:maxLines="2"
+                android:ellipsize="end" />
         </LinearLayout>
+
+        <!-- Quick Topic Templates (One-Tap Starters) -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="⚡ Quick Starters (Tap to fill)"
+            android:textColor="?android:attr/textColorSecondary"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/templateHealthCamp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_community_template_chip"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:text="🏥 Medical Camp"
+                    android:textColor="?attr/colorPrimary"
+                    android:textSize="11.5sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/templateRoadRepair"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/bg_community_template_chip"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:text="🚧 Road Diversion"
+                    android:textColor="?attr/colorPrimary"
+                    android:textSize="11.5sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/templatePowerCut"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/bg_community_template_chip"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:text="⚡ Power Outage"
+                    android:textColor="?attr/colorPrimary"
+                    android:textSize="11.5sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/templateMandi"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/bg_community_template_chip"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:text="🌾 Mandi Procurement"
+                    android:textColor="?attr/colorPrimary"
+                    android:textSize="11.5sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </HorizontalScrollView>
 
         <!-- Author Role Selection -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="Posting As"
+            android:text="Posting As (Author Role)"
             android:textColor="?android:attr/textColorPrimary"
             android:textSize="13sp"
             android:textStyle="bold" />
@@ -116,28 +198,40 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:checked="true"
-                    android:text="Verified Resident" />
+                    android:text="🏠 Verified Resident"
+                    android:textSize="12sp" />
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chipRolePanchayat"
                     style="@style/Widget.MaterialComponents.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Panchayat Member" />
+                    android:text="🏛️ Panchayat Member"
+                    android:textSize="12sp" />
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chipRoleStudent"
                     style="@style/Widget.MaterialComponents.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Student" />
+                    android:text="🎓 Student"
+                    android:textSize="12sp" />
 
                 <com.google.android.material.chip.Chip
-                    android:id="@+id/chipRoleVolunteer"
+                    android:id="@+id/chipRoleDoctor"
                     style="@style/Widget.MaterialComponents.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Local Volunteer" />
+                    android:text="🩺 Doctor / PHC"
+                    android:textSize="12sp" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipRoleMerchant"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🏪 Local Merchant"
+                    android:textSize="12sp" />
             </com.google.android.material.chip.ChipGroup>
         </HorizontalScrollView>
 
@@ -145,7 +239,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="14dp"
             android:text="Notice Headline"
             android:textColor="?android:attr/textColorPrimary"
             android:textSize="13sp"
@@ -156,11 +250,11 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:background="@drawable/bg_saved_location_card_normal"
+            android:background="@drawable/bg_community_input_box"
             android:hint="e.g. Free Eye Checkup Camp at Farrukhnagar PHC"
             android:inputType="textCapSentences"
             android:maxLines="2"
-            android:padding="12dp"
+            android:padding="14dp"
             android:textColor="?android:attr/textColorPrimary"
             android:textColorHint="?android:attr/textColorSecondary"
             android:textSize="14sp" />
@@ -169,7 +263,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="14dp"
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
@@ -186,51 +280,77 @@
                 android:id="@+id/tvWordCount"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:background="@drawable/bg_community_word_count_pill"
                 android:text="0 / 60 words"
                 android:textColor="?android:attr/textColorSecondary"
-                android:textSize="12sp"
+                android:textSize="11.5sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
         <EditText
             android:id="@+id/etNoticeContent"
             android:layout_width="match_parent"
-            android:layout_height="100dp"
+            android:layout_height="105dp"
             android:layout_marginTop="6dp"
-            android:background="@drawable/bg_saved_location_card_normal"
+            android:background="@drawable/bg_community_input_box"
             android:gravity="top|start"
             android:hint="Provide key facts: timings, venue, contact, and instructions for fellow residents..."
             android:inputType="textMultiLine|textCapSentences"
-            android:padding="12dp"
+            android:padding="14dp"
             android:textColor="?android:attr/textColorPrimary"
             android:textColorHint="?android:attr/textColorSecondary"
             android:textSize="14sp" />
 
-        <!-- AI Moderation Notice Banner -->
+        <!-- Word Limit Warning (Hidden by default, shown if > 60 words) -->
+        <TextView
+            android:id="@+id/tvWordLimitWarning"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="⚠️ Notice exceeds 60 words. Please shorten for instant mobile reading."
+            android:textColor="#EF4444"
+            android:textSize="11.5sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
+        <!-- Groq AI Content Guard Trust Shield Card -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:background="@drawable/bg_community_role_badge"
+            android:layout_marginTop="14dp"
+            android:background="@drawable/bg_community_shield_card"
             android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingHorizontal="10dp"
-            android:paddingVertical="8dp">
+            android:orientation="horizontal">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="🤖 "
-                android:textSize="14sp" />
+                android:text="🛡️"
+                android:textSize="20sp" />
 
-            <TextView
+            <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Groq AI Content Guard: Every submission is screened in real-time for safety, civility, and authentic civic relevance."
-                android:textColor="#00B894"
-                android:textSize="11.5sp"
-                android:textStyle="bold" />
+                android:layout_marginStart="10dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Groq AI Content Guard (Real-Time)"
+                    android:textColor="@color/community_shield_text"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="1dp"
+                    android:text="Every submission is screened in sub-second inference for authenticity, safety, and profanity prevention."
+                    android:textColor="@color/community_shield_text"
+                    android:textSize="11sp" />
+            </LinearLayout>
         </LinearLayout>
 
         <!-- Rejection / Error Alert Box (Gone by default) -->
@@ -238,10 +358,10 @@
             android:id="@+id/layoutRejectionNotice"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="12dp"
             android:background="@drawable/bg_community_urgency_badge"
             android:orientation="vertical"
-            android:padding="10dp"
+            android:padding="12dp"
             android:visibility="gone">
 
             <TextView
@@ -249,14 +369,14 @@
                 android:layout_height="wrap_content"
                 android:text="⚠️ AI Moderation Feedback"
                 android:textColor="#FFFFFF"
-                android:textSize="12sp"
+                android:textSize="12.5sp"
                 android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/tvRejectionReason"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
+                android:layout_marginTop="3dp"
                 android:text="Notice violated community guidelines."
                 android:textColor="#FFFFFF"
                 android:textSize="12sp" />
@@ -265,7 +385,7 @@
         <!-- Submit Button & Progress Bar -->
         <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="46dp"
+            android:layout_height="48dp"
             android:layout_marginTop="16dp"
             android:layout_marginBottom="8dp">
 
@@ -273,8 +393,9 @@
                 android:id="@+id/btnSubmitNotice"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="@drawable/bg_community_post_pill"
+                android:background="@drawable/bg_community_btn_gradient"
                 android:clickable="true"
+                android:elevation="2dp"
                 android:focusable="true"
                 android:gravity="center"
                 android:text="🚀 Verify with Groq AI &amp; Publish"

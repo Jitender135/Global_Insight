@@ -1894,6 +1894,7 @@ public class HomeActivity extends AppCompatActivity {
         EditText etNoticeTitle = sheetView.findViewById(R.id.etNoticeTitle);
         EditText etNoticeContent = sheetView.findViewById(R.id.etNoticeContent);
         TextView tvWordCount = sheetView.findViewById(R.id.tvWordCount);
+        TextView tvWordLimitWarning = sheetView.findViewById(R.id.tvWordLimitWarning);
         TextView btnSubmitNotice = sheetView.findViewById(R.id.btnSubmitNotice);
         ProgressBar pbSubmitNotice = sheetView.findViewById(R.id.pbSubmitNotice);
         LinearLayout layoutRejectionNotice = sheetView.findViewById(R.id.layoutRejectionNotice);
@@ -1902,7 +1903,13 @@ public class HomeActivity extends AppCompatActivity {
         com.google.android.material.chip.Chip chipRoleResident = sheetView.findViewById(R.id.chipRoleResident);
         com.google.android.material.chip.Chip chipRolePanchayat = sheetView.findViewById(R.id.chipRolePanchayat);
         com.google.android.material.chip.Chip chipRoleStudent = sheetView.findViewById(R.id.chipRoleStudent);
-        com.google.android.material.chip.Chip chipRoleVolunteer = sheetView.findViewById(R.id.chipRoleVolunteer);
+        com.google.android.material.chip.Chip chipRoleDoctor = sheetView.findViewById(R.id.chipRoleDoctor);
+        com.google.android.material.chip.Chip chipRoleMerchant = sheetView.findViewById(R.id.chipRoleMerchant);
+
+        TextView templateHealthCamp = sheetView.findViewById(R.id.templateHealthCamp);
+        TextView templateRoadRepair = sheetView.findViewById(R.id.templateRoadRepair);
+        TextView templatePowerCut = sheetView.findViewById(R.id.templatePowerCut);
+        TextView templateMandi = sheetView.findViewById(R.id.templateMandi);
 
         // Location label
         String locDisplay = currentGpsAddress;
@@ -1913,6 +1920,70 @@ public class HomeActivity extends AppCompatActivity {
             tvPostNoticeLocation.setText(locDisplay);
         }
 
+        // Helper to update word count & colors dynamically
+        Runnable updateWordCounter = () -> {
+            String text = etNoticeContent.getText().toString().trim();
+            int words = text.isEmpty() ? 0 : text.split("\\s+").length;
+            if (tvWordCount != null) {
+                tvWordCount.setText(words + " / 60 words");
+                if (words == 0) {
+                    tvWordCount.setTextColor(android.graphics.Color.parseColor("#94A3B8"));
+                    if (tvWordLimitWarning != null) tvWordLimitWarning.setVisibility(View.GONE);
+                    btnSubmitNotice.setEnabled(true);
+                    btnSubmitNotice.setAlpha(1.0f);
+                } else if (words <= 45) {
+                    tvWordCount.setTextColor(android.graphics.Color.parseColor("#16A34A")); // Green
+                    if (tvWordLimitWarning != null) tvWordLimitWarning.setVisibility(View.GONE);
+                    btnSubmitNotice.setEnabled(true);
+                    btnSubmitNotice.setAlpha(1.0f);
+                } else if (words <= 60) {
+                    tvWordCount.setTextColor(android.graphics.Color.parseColor("#D97706")); // Amber
+                    if (tvWordLimitWarning != null) tvWordLimitWarning.setVisibility(View.GONE);
+                    btnSubmitNotice.setEnabled(true);
+                    btnSubmitNotice.setAlpha(1.0f);
+                } else {
+                    tvWordCount.setTextColor(android.graphics.Color.parseColor("#DC2626")); // Red
+                    if (tvWordLimitWarning != null) tvWordLimitWarning.setVisibility(View.VISIBLE);
+                    btnSubmitNotice.setEnabled(false);
+                    btnSubmitNotice.setAlpha(0.6f);
+                }
+            }
+        };
+
+        // Quick template clicks
+        if (templateHealthCamp != null) {
+            templateHealthCamp.setOnClickListener(v -> {
+                etNoticeTitle.setText("Free Health & Eye Checkup Camp at Local Dispensary");
+                etNoticeContent.setText("A free health and eye checkup camp is organized this Sunday from 9 AM to 2 PM at the local dispensary. Doctors will provide free consultations and basic medicine. All residents are welcome.");
+                if (chipRoleDoctor != null) chipRoleDoctor.setChecked(true);
+                updateWordCounter.run();
+            });
+        }
+        if (templateRoadRepair != null) {
+            templateRoadRepair.setOnClickListener(v -> {
+                etNoticeTitle.setText("Road Repair & Service Lane Diversion on Main Sector Road");
+                etNoticeContent.setText("Emergency road repair underway on the main sector road for the next 48 hours. Heavy vehicles and traffic diverted via the internal service lane. Commuters please plan ahead.");
+                if (chipRoleResident != null) chipRoleResident.setChecked(true);
+                updateWordCounter.run();
+            });
+        }
+        if (templatePowerCut != null) {
+            templatePowerCut.setOnClickListener(v -> {
+                etNoticeTitle.setText("Scheduled Power Outage for Feeder Maintenance on Saturday");
+                etNoticeContent.setText("Electricity department announces scheduled maintenance outage this Saturday from 10 AM to 3 PM for transformer upgradation across the sector. Inconvenience is regretted.");
+                if (chipRoleResident != null) chipRoleResident.setChecked(true);
+                updateWordCounter.run();
+            });
+        }
+        if (templateMandi != null) {
+            templateMandi.setOnClickListener(v -> {
+                etNoticeTitle.setText("Grain Mandi Government MSP Procurement Starts Monday");
+                etNoticeContent.setText("Local Anaaj Mandi will commence government MSP procurement from Monday 8 AM. Farmers are requested to bring registration token slips and bank passbooks.");
+                if (chipRolePanchayat != null) chipRolePanchayat.setChecked(true);
+                updateWordCounter.run();
+            });
+        }
+
         // Word Counter TextWatcher (strictly <= 60 words)
         etNoticeContent.addTextChangedListener(new android.text.TextWatcher() {
             @Override
@@ -1920,16 +1991,7 @@ public class HomeActivity extends AppCompatActivity {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                String text = s.toString().trim();
-                int words = text.isEmpty() ? 0 : text.split("\\s+").length;
-                if (tvWordCount != null) {
-                    tvWordCount.setText(words + " / 60 words");
-                    if (words > 60) {
-                        tvWordCount.setTextColor(android.graphics.Color.parseColor("#D63031"));
-                    } else {
-                        tvWordCount.setTextColor(android.graphics.Color.parseColor("#888888"));
-                    }
-                }
+                updateWordCounter.run();
             }
 
             @Override
@@ -1962,8 +2024,10 @@ public class HomeActivity extends AppCompatActivity {
                 authorRole = "Panchayat Member";
             } else if (chipRoleStudent != null && chipRoleStudent.isChecked()) {
                 authorRole = "Student";
-            } else if (chipRoleVolunteer != null && chipRoleVolunteer.isChecked()) {
-                authorRole = "Local Volunteer";
+            } else if (chipRoleDoctor != null && chipRoleDoctor.isChecked()) {
+                authorRole = "Doctor / PHC";
+            } else if (chipRoleMerchant != null && chipRoleMerchant.isChecked()) {
+                authorRole = "Local Merchant";
             }
 
             // Show loading state
