@@ -24,7 +24,7 @@ import java.util.concurrent.Executors;
 public class GrokStoryService {
 
     // Default to FastAPI Backend running locally / deployed
-    private static String BACKEND_BASE_URL = "http://10.0.2.2:8080";
+    private static String BACKEND_BASE_URL = "http://10.0.2.2:8085";
     // Direct Grok API Backup
     private static String GROK_API_KEY = "";
     private static final String GROK_DIRECT_URL = "https://api.x.ai/v1/chat/completions";

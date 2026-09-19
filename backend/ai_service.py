@@ -291,3 +291,119 @@ async def translate_vernacular_articles(
 
     return articles
 
+
+async def moderate_community_notice(
+    title: str,
+    content: str,
+    author_role: str = "Resident",
+    location: str = ""
+) -> Dict[str, Any]:
+    """
+    Screens hyper-local community notices submitted by users using Groq AI.
+    Checks for civility, safety, profanity, commercial spam, and authentic civic/community relevance.
+    Limits to <= 60 words, assigns category and urgency.
+    """
+    # 1. Quick local sanity check for profanity/spam
+    combined = f"{title} {content}".lower()
+    flagged_words = [
+        "fuck", "bitch", "asshole", "bastard", "nude", "porn", "sex", "scam", "crypto pump",
+        "telegram leak", "whatsapp group link", "betting app", "free casino", "madarchod", "bhenchod",
+        "chutiya", "gand"
+    ]
+    for bad in flagged_words:
+        if bad in combined:
+            return {
+                "approved": False,
+                "rejection_reason": "Notice contains prohibited words, profanity, or spam.",
+                "category": "Flagged Content",
+                "polished_title": title,
+                "polished_content": content,
+                "urgency": "Normal"
+            }
+
+    system_prompt = (
+        "You are the AI Content Moderator for Global Insight's Hyper-Local Community Spotlights (inspired by Public App and Way2News).\n"
+        "Your duty is to screen user-submitted local community notices for authenticity, civic relevance, and community safety.\n\n"
+        "RULES FOR APPROVAL (approved: true):\n"
+        "- Genuine hyper-local community & civic notices: Free medical camps, road repairs, traffic diversions, water/power supply schedules, "
+        "gram panchayat meetings, school/college notifications, grain mandi (procurement) updates, local blood donation drives, missing items/pets, "
+        "temple/cultural festival announcements, or civic warnings.\n"
+        "- Tone must be informative, constructive, and civil.\n\n"
+        "RULES FOR REJECTION (approved: false):\n"
+        "- Profanity, vulgarity, abuse, hate speech, harassment, slurs.\n"
+        "- Commercial spam, affiliate links, MLM, betting apps, cryptocurrency, adult content, fraudulent schemes.\n"
+        "- Unverified panic-mongering, violent threats, false emergency hoaxes.\n"
+        "- Unrelated personal rants or completely nonsensical gibberish.\n\n"
+        "CATEGORIES (choose exactly one):\n"
+        "- 🏥 Health & Blood Camp\n"
+        "- 🚧 Traffic & Road Repair\n"
+        "- 📢 Panchayat & Civic Notice\n"
+        "- ⚡ Power & Water Schedule\n"
+        "- 🌾 Agriculture & Mandi\n"
+        "- 🎓 School & Student Notice\n"
+        "- 🚨 Emergency Alert\n"
+        "- 🎉 Local Culture & Events\n\n"
+        "WORD LIMIT:\n"
+        "- Ensure polished_content is STRICTLY 60 words or fewer, direct, and easy to read on mobile.\n\n"
+        "RESPONSE FORMAT:\n"
+        "Output ONLY a raw JSON object (no markdown, no ```json formatting):\n"
+        "{\n"
+        '  "approved": true,\n'
+        '  "rejection_reason": "",\n'
+        '  "category": "🏥 Health & Blood Camp",\n'
+        '  "polished_title": "Polished concise title",\n'
+        '  "polished_content": "Crisp informative notice text strictly under 60 words.",\n'
+        '  "urgency": "Normal"\n'
+        "}"
+    )
+
+    user_prompt = (
+        f"Submitted By Role: {author_role}\n"
+        f"Location: {location}\n"
+        f"Submitted Title: {title}\n"
+        f"Submitted Content: {content}"
+    )
+
+    try:
+        raw_res = await call_free_ai_api(user_prompt, system_prompt)
+        if "{" in raw_res and "}" in raw_res:
+            start = raw_res.find("{")
+            end = raw_res.rfind("}") + 1
+            data = json.loads(raw_res[start:end])
+
+            approved = bool(data.get("approved", True))
+            rejection_reason = (data.get("rejection_reason") or "").strip()
+            category = data.get("category") or "📢 Panchayat & Civic Notice"
+            p_title = (data.get("polished_title") or title).strip()
+            p_content = (data.get("polished_content") or content).strip()
+            urgency = data.get("urgency") or "Normal"
+            if urgency not in ["Normal", "High"]:
+                urgency = "Normal"
+
+            return {
+                "approved": approved,
+                "rejection_reason": rejection_reason,
+                "category": category,
+                "polished_title": p_title or title,
+                "polished_content": p_content or content,
+                "urgency": urgency
+            }
+    except Exception as e:
+        print(f"Community notice AI moderation error: {e}")
+
+    # Fallback if AI call failed but text passed local profanity filter
+    words = content.strip().split()
+    if len(words) > 65:
+        truncated = " ".join(words[:60]) + "..."
+    else:
+        truncated = content.strip()
+
+    return {
+        "approved": True,
+        "rejection_reason": "",
+        "category": "📢 Panchayat & Civic Notice",
+        "polished_title": title.strip(),
+        "polished_content": truncated,
+        "urgency": "Normal"
+    }
+

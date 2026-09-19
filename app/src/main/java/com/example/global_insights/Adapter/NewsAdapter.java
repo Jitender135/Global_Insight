@@ -84,6 +84,38 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder
             holder.description.setVisibility(View.VISIBLE);
         }
 
+        // Community Spotlight Notice Binding
+        if (holder.layoutCommunitySpotlight != null) {
+            if (news.isCommunitySpotlight()) {
+                holder.layoutCommunitySpotlight.setVisibility(View.VISIBLE);
+
+                String cat = news.getSpotlightCategory();
+                if (holder.tvSpotlightBadge != null) {
+                    holder.tvSpotlightBadge.setText(cat != null && !cat.isEmpty() ? "📢 " + cat.toUpperCase(Locale.getDefault()) : "📢 COMMUNITY NOTICE");
+                }
+
+                String role = news.getAuthorRole();
+                if (holder.tvSpotlightRole != null) {
+                    holder.tvSpotlightRole.setText(role != null && !role.isEmpty() ? "✅ " + role : "✅ Verified Resident");
+                }
+
+                if (holder.tvSpotlightUrgency != null) {
+                    if ("High".equalsIgnoreCase(news.getUrgency())) {
+                        holder.tvSpotlightUrgency.setVisibility(View.VISIBLE);
+                    } else {
+                        holder.tvSpotlightUrgency.setVisibility(View.GONE);
+                    }
+                }
+
+                if (holder.btnSpotlightUpvote != null) {
+                    holder.btnSpotlightUpvote.setText("👍 " + news.getUpvotes() + " Upvotes");
+                    holder.btnSpotlightUpvote.setOnClickListener(v -> upvoteSpotlight(news, holder.btnSpotlightUpvote));
+                }
+            } else {
+                holder.layoutCommunitySpotlight.setVisibility(View.GONE);
+            }
+        }
+
         String sourceName = news.getSource() != null && news.getSource().getName() != null && !news.getSource().getName().isEmpty() ? news.getSource().getName() : "Global News";
         holder.sourceTag.setText(sourceName);
 
@@ -321,6 +353,8 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder
         TextView title, description, readMore, sourceTag, vernacularBadge, publishedTime, newsFooter;
         ImageView bookmarkIcon, newsImage, shareIcon, audioButton;
         View btnAskStory;
+        View layoutCommunitySpotlight;
+        TextView tvSpotlightBadge, tvSpotlightRole, tvSpotlightUrgency, btnSpotlightUpvote, tvSpotlightAiVerified;
 
         public NewsViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -337,6 +371,51 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder
             shareIcon = itemView.findViewById(R.id.shareIcon);
             audioButton = itemView.findViewById(R.id.audioButton);
             btnAskStory = itemView.findViewById(R.id.btnAskStory);
+            layoutCommunitySpotlight = itemView.findViewById(R.id.layoutCommunitySpotlight);
+            tvSpotlightBadge = itemView.findViewById(R.id.tvSpotlightBadge);
+            tvSpotlightRole = itemView.findViewById(R.id.tvSpotlightRole);
+            tvSpotlightUrgency = itemView.findViewById(R.id.tvSpotlightUrgency);
+            btnSpotlightUpvote = itemView.findViewById(R.id.btnSpotlightUpvote);
+            tvSpotlightAiVerified = itemView.findViewById(R.id.tvSpotlightAiVerified);
         }
     }
+
+    private void upvoteSpotlight(Article article, TextView upvoteView) {
+        if (article == null || article.getId() == null) return;
+
+        final int newCount = article.getUpvotes() + 1;
+        article.setUpvotes(newCount);
+        if (upvoteView != null) {
+            upvoteView.setText("👍 " + newCount + " Upvotes");
+            upvoteView.setEnabled(false);
+            upvoteView.setAlpha(0.85f);
+        }
+
+        java.util.concurrent.Executors.newSingleThreadExecutor().execute(() -> {
+            try {
+                java.net.URL url = new java.net.URL("http://10.0.2.2:8085/api/community/upvote");
+                java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("POST");
+                conn.setRequestProperty("Content-Type", "application/json");
+                conn.setDoOutput(true);
+                conn.setConnectTimeout(4000);
+                conn.setReadTimeout(6000);
+
+                org.json.JSONObject obj = new org.json.JSONObject();
+                obj.put("spotlight_id", article.getId());
+
+                try (java.io.OutputStream os = conn.getOutputStream()) {
+                    os.write(obj.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                }
+
+                int respCode = conn.getResponseCode();
+                if (respCode == 200) {
+                    new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
+                        Toast.makeText(context, "Upvoted local notice 👍", Toast.LENGTH_SHORT).show();
+                    });
+                }
+            } catch (Exception ignored) {}
+        });
+    }
 }
+

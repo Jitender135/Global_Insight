@@ -57,6 +57,9 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.io.OutputStream;
+import org.json.JSONObject;
+import android.widget.ProgressBar;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -94,6 +97,8 @@ public class HomeActivity extends AppCompatActivity {
     private TextView btnSaveRadiusLocation;
     private TextView btnSwitchRadiusPlaces;
     private ImageView btnRefreshRadiusGps;
+    private View layoutPostNoticeBanner;
+    private TextView btnPostCommunityNotice;
 
     // Current GPS cache for quick saving
     private double currentGpsLat = 0.0;
@@ -208,6 +213,13 @@ public class HomeActivity extends AppCompatActivity {
                 loadRadiusNewsTab(true);
             });
         }
+
+        layoutPostNoticeBanner = findViewById(R.id.layoutPostNoticeBanner);
+        btnPostCommunityNotice = findViewById(R.id.btnPostCommunityNotice);
+        View.OnClickListener openPostNoticeListener = v -> showPostCommunityNoticeDialog();
+        if (layoutPostNoticeBanner != null) layoutPostNoticeBanner.setOnClickListener(openPostNoticeListener);
+        if (btnPostCommunityNotice != null) btnPostCommunityNotice.setOnClickListener(openPostNoticeListener);
+
         SavedLocationManager.setActiveToLiveGps(this);
         updatePlacesButtonBadge();
         SavedLocationManager.loadFromFirebaseIfAvailable(this);
@@ -1520,7 +1532,7 @@ public class HomeActivity extends AppCompatActivity {
                 SharedPreferences preferences = getSharedPreferences("user_preferences", MODE_PRIVATE);
                 String targetLang = preferences.getString("selected_language", "en");
 
-                String backendBase = "http://10.0.2.2:8080";
+                String backendBase = "http://10.0.2.2:8085";
                 StringBuilder urlBuilder = new StringBuilder(backendBase + "/api/radius-news?");
                 if (lat != 0.0) urlBuilder.append("lat=").append(lat).append("&");
                 if (lon != 0.0) urlBuilder.append("lon=").append(lon).append("&");
@@ -1870,6 +1882,186 @@ public class HomeActivity extends AppCompatActivity {
             }
         });
         bottomSheet.show(getSupportFragmentManager(), "SavedLocationsBottomSheet");
+    }
+
+    private void showPostCommunityNoticeDialog() {
+        com.google.android.material.bottomsheet.BottomSheetDialog dialog =
+                new com.google.android.material.bottomsheet.BottomSheetDialog(this);
+        View sheetView = getLayoutInflater().inflate(R.layout.dialog_post_community_notice, null);
+        dialog.setContentView(sheetView);
+
+        TextView tvPostNoticeLocation = sheetView.findViewById(R.id.tvPostNoticeLocation);
+        EditText etNoticeTitle = sheetView.findViewById(R.id.etNoticeTitle);
+        EditText etNoticeContent = sheetView.findViewById(R.id.etNoticeContent);
+        TextView tvWordCount = sheetView.findViewById(R.id.tvWordCount);
+        TextView btnSubmitNotice = sheetView.findViewById(R.id.btnSubmitNotice);
+        ProgressBar pbSubmitNotice = sheetView.findViewById(R.id.pbSubmitNotice);
+        LinearLayout layoutRejectionNotice = sheetView.findViewById(R.id.layoutRejectionNotice);
+        TextView tvRejectionReason = sheetView.findViewById(R.id.tvRejectionReason);
+
+        com.google.android.material.chip.Chip chipRoleResident = sheetView.findViewById(R.id.chipRoleResident);
+        com.google.android.material.chip.Chip chipRolePanchayat = sheetView.findViewById(R.id.chipRolePanchayat);
+        com.google.android.material.chip.Chip chipRoleStudent = sheetView.findViewById(R.id.chipRoleStudent);
+        com.google.android.material.chip.Chip chipRoleVolunteer = sheetView.findViewById(R.id.chipRoleVolunteer);
+
+        // Location label
+        String locDisplay = currentGpsAddress;
+        if (locDisplay == null || locDisplay.isEmpty()) {
+            locDisplay = tvRadiusBannerLocation != null ? tvRadiusBannerLocation.getText().toString() : "Current Location";
+        }
+        if (tvPostNoticeLocation != null) {
+            tvPostNoticeLocation.setText(locDisplay);
+        }
+
+        // Word Counter TextWatcher (strictly <= 60 words)
+        etNoticeContent.addTextChangedListener(new android.text.TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                String text = s.toString().trim();
+                int words = text.isEmpty() ? 0 : text.split("\\s+").length;
+                if (tvWordCount != null) {
+                    tvWordCount.setText(words + " / 60 words");
+                    if (words > 60) {
+                        tvWordCount.setTextColor(android.graphics.Color.parseColor("#D63031"));
+                    } else {
+                        tvWordCount.setTextColor(android.graphics.Color.parseColor("#888888"));
+                    }
+                }
+            }
+
+            @Override
+            public void afterTextChanged(android.text.Editable s) {}
+        });
+
+        btnSubmitNotice.setOnClickListener(v -> {
+            String title = etNoticeTitle.getText().toString().trim();
+            String content = etNoticeContent.getText().toString().trim();
+
+            if (title.isEmpty()) {
+                etNoticeTitle.setError("Please enter a notice headline");
+                etNoticeTitle.requestFocus();
+                return;
+            }
+            if (content.isEmpty()) {
+                etNoticeContent.setError("Please enter notice details");
+                etNoticeContent.requestFocus();
+                return;
+            }
+
+            int wordCount = content.split("\\s+").length;
+            if (wordCount > 60) {
+                Toast.makeText(HomeActivity.this, "Notice must be 60 words or fewer for instant mobile reading", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            String authorRole = "Verified Resident";
+            if (chipRolePanchayat != null && chipRolePanchayat.isChecked()) {
+                authorRole = "Panchayat Member";
+            } else if (chipRoleStudent != null && chipRoleStudent.isChecked()) {
+                authorRole = "Student";
+            } else if (chipRoleVolunteer != null && chipRoleVolunteer.isChecked()) {
+                authorRole = "Local Volunteer";
+            }
+
+            // Show loading state
+            btnSubmitNotice.setText("");
+            btnSubmitNotice.setEnabled(false);
+            if (pbSubmitNotice != null) pbSubmitNotice.setVisibility(View.VISIBLE);
+            if (layoutRejectionNotice != null) layoutRejectionNotice.setVisibility(View.GONE);
+
+            final String finalRole = authorRole;
+            final double finalLat = currentGpsLat;
+            final double finalLon = currentGpsLon;
+            final String finalVillage = currentGpsSubLocality;
+            final String finalTehsil = currentGpsTehsil;
+            final String finalDistrict = currentGpsDistrict;
+            final String finalState = currentGpsState;
+
+            Executors.newSingleThreadExecutor().execute(() -> {
+                boolean isApproved = false;
+                String responseMessage = "";
+                String rejectionReason = "";
+
+                try {
+                    URL url = new URL("http://10.0.2.2:8085/api/community/post");
+                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                    conn.setRequestMethod("POST");
+                    conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+                    conn.setDoOutput(true);
+                    conn.setConnectTimeout(8000);
+                    conn.setReadTimeout(18000);
+
+                    JSONObject payload = new JSONObject();
+                    payload.put("title", title);
+                    payload.put("content", content);
+                    payload.put("author_name", "Community Member");
+                    payload.put("author_role", finalRole);
+                    payload.put("village", finalVillage != null ? finalVillage : "");
+                    payload.put("tehsil", finalTehsil != null ? finalTehsil : "");
+                    payload.put("district", finalDistrict != null ? finalDistrict : "");
+                    payload.put("state", finalState != null ? finalState : "");
+                    payload.put("lat", finalLat);
+                    payload.put("lon", finalLon);
+
+                    try (OutputStream os = conn.getOutputStream()) {
+                        os.write(payload.toString().getBytes(StandardCharsets.UTF_8));
+                    }
+
+                    int code = conn.getResponseCode();
+                    if (code == 200) {
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8));
+                        StringBuilder sb = new StringBuilder();
+                        String line;
+                        while ((line = reader.readLine()) != null) sb.append(line);
+                        reader.close();
+
+                        JSONObject resJson = new JSONObject(sb.toString());
+                        isApproved = resJson.optBoolean("approved", false);
+                        responseMessage = resJson.optString("message", "Notice broadcasted successfully!");
+                        rejectionReason = resJson.optString("reason", "Notice violated community safety guidelines.");
+                    } else {
+                        rejectionReason = "Server error (" + code + "). Please try again.";
+                    }
+                } catch (Exception e) {
+                    rejectionReason = "AI verification error: " + e.getMessage();
+                }
+
+                final boolean success = isApproved;
+                final String msg = responseMessage;
+                final String reason = rejectionReason;
+
+                runOnUiThread(() -> {
+                    btnSubmitNotice.setText("🚀 Verify with Groq AI & Publish");
+                    btnSubmitNotice.setEnabled(true);
+                    if (pbSubmitNotice != null) pbSubmitNotice.setVisibility(View.GONE);
+
+                    if (success) {
+                        dialog.dismiss();
+                        new AlertDialog.Builder(HomeActivity.this)
+                                .setTitle("✅ Notice Verified & Published!")
+                                .setMessage(msg + "\n\nYour spotlight is now live for all residents in your 10 km circle.")
+                                .setPositiveButton("View in Feed", (d, w) -> {
+                                    tabArticleCache.clear();
+                                    tabCacheTime.clear();
+                                    loadRadiusNewsTab(false);
+                                })
+                                .show();
+
+                        tabArticleCache.clear();
+                        tabCacheTime.clear();
+                        loadRadiusNewsTab(false);
+                    } else {
+                        if (layoutRejectionNotice != null) layoutRejectionNotice.setVisibility(View.VISIBLE);
+                        if (tvRejectionReason != null) tvRejectionReason.setText(reason);
+                    }
+                });
+            });
+        });
+
+        dialog.show();
     }
 
     private void showSearchAreaDialog() {

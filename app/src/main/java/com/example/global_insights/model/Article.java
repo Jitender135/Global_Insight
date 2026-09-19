@@ -14,6 +14,12 @@ public class Article {
     private String originalTitle;
     private String originalDescription;
     private String vernacularSource;
+    private boolean isCommunitySpotlight;
+    private String spotlightCategory;
+    private String authorRole;
+    private String urgency;
+    private int upvotes;
+    private String locationTag;
 
     public String getId() {
         return id;
@@ -117,5 +123,53 @@ public class Article {
 
     public void setVernacularSource(String vernacularSource) {
         this.vernacularSource = vernacularSource;
+    }
+
+    public boolean isCommunitySpotlight() {
+        return isCommunitySpotlight;
+    }
+
+    public void setCommunitySpotlight(boolean communitySpotlight) {
+        isCommunitySpotlight = communitySpotlight;
+    }
+
+    public String getSpotlightCategory() {
+        return spotlightCategory;
+    }
+
+    public void setSpotlightCategory(String spotlightCategory) {
+        this.spotlightCategory = spotlightCategory;
+    }
+
+    public String getAuthorRole() {
+        return authorRole;
+    }
+
+    public void setAuthorRole(String authorRole) {
+        this.authorRole = authorRole;
+    }
+
+    public String getUrgency() {
+        return urgency;
+    }
+
+    public void setUrgency(String urgency) {
+        this.urgency = urgency;
+    }
+
+    public int getUpvotes() {
+        return upvotes;
+    }
+
+    public void setUpvotes(int upvotes) {
+        this.upvotes = upvotes;
+    }
+
+    public String getLocationTag() {
+        return locationTag;
+    }
+
+    public void setLocationTag(String locationTag) {
+        this.locationTag = locationTag;
     }
 }
