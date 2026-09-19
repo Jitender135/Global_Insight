@@ -63,9 +63,11 @@ import java.util.concurrent.Executors;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -1541,9 +1543,22 @@ public class HomeActivity extends AppCompatActivity {
                     NewsResponse response = gson.fromJson(sb.toString(), NewsResponse.class);
                     if (response != null && response.getArticles() != null && !response.getArticles().isEmpty()) {
                         backendSuccess = true;
+                        final boolean isExpanded = response.isExpanded();
+                        final int effectiveRadius = response.getRadiusKm() > 0 ? response.getRadiusKm() : 10;
                         mainHandler.post(() -> {
                             saveToCache(cacheKey, response.getArticles());
                             setSanitizedArticles(response.getArticles());
+
+                            if (tvRadiusBannerMode != null) {
+                                String baseMode = (placeLabel != null && !placeLabel.equals("Live GPS"))
+                                        ? placeLabel.toUpperCase(Locale.getDefault())
+                                        : "LIVE GPS";
+                                if (isExpanded) {
+                                    tvRadiusBannerMode.setText(baseMode + " • 20 KM RADIUS (EXPANDED)");
+                                } else {
+                                    tvRadiusBannerMode.setText(baseMode + " • " + effectiveRadius + " KM RADIUS");
+                                }
+                            }
                         });
                     }
                 }
@@ -1552,12 +1567,12 @@ public class HomeActivity extends AppCompatActivity {
             }
 
             if (!backendSuccess) {
-                mainHandler.post(() -> fetchRadiusNewsFallback(cacheKey, subLocality, locality));
+                mainHandler.post(() -> fetchRadiusNewsFallback(cacheKey, subLocality, locality, placeLabel));
             }
         });
     }
 
-    private void fetchRadiusNewsFallback(String cacheKey, String subLocality, String locality) {
+    private void fetchRadiusNewsFallback(String cacheKey, String subLocality, String locality, String placeLabel) {
         SharedPreferences preferences = getSharedPreferences("user_preferences", MODE_PRIVATE);
         String languageCode = preferences.getString("selected_language", "en");
 
@@ -1577,8 +1592,20 @@ public class HomeActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<NewsResponse> call, Response<NewsResponse> response) {
                 if (response.isSuccessful() && response.body() != null && response.body().getArticles() != null && !response.body().getArticles().isEmpty()) {
-                    saveToCache(cacheKey, response.body().getArticles());
-                    setSanitizedArticles(response.body().getArticles());
+                    List<Article> articles = response.body().getArticles();
+                    if (articles.size() < 5 && locality != null && !locality.isEmpty()) {
+                        // Smart Auto-Expansion to 20 km (broader locality/district news)
+                        fetchExpandedFallback(cacheKey, articles, locality, placeLabel);
+                    } else {
+                        saveToCache(cacheKey, articles);
+                        setSanitizedArticles(articles);
+                        if (tvRadiusBannerMode != null) {
+                            String baseMode = (placeLabel != null && !placeLabel.equals("Live GPS"))
+                                    ? placeLabel.toUpperCase(Locale.getDefault())
+                                    : "LIVE GPS";
+                            tvRadiusBannerMode.setText(baseMode + " • 10 KM RADIUS");
+                        }
+                    }
                 } else {
                     fetchLocationNewsFallback(locality, (locality != null && !locality.isEmpty() ? locality : "India") + " news");
                 }
@@ -1587,6 +1614,47 @@ public class HomeActivity extends AppCompatActivity {
             @Override
             public void onFailure(Call<NewsResponse> call, Throwable t) {
                 fetchLocationNewsFallback(locality, (locality != null && !locality.isEmpty() ? locality : "India") + " news");
+            }
+        });
+    }
+
+    private void fetchExpandedFallback(String cacheKey, List<Article> initialArticles, String locality, String placeLabel) {
+        SharedPreferences preferences = getSharedPreferences("user_preferences", MODE_PRIVATE);
+        String languageCode = preferences.getString("selected_language", "en");
+
+        NewsApiService apiService = ApiClient.getClient().create(NewsApiService.class);
+        Call<NewsResponse> call = apiService.getEverything(locality + " news", API_KEY, languageCode);
+
+        call.enqueue(new Callback<NewsResponse>() {
+            @Override
+            public void onResponse(Call<NewsResponse> call, Response<NewsResponse> response) {
+                List<Article> merged = new ArrayList<>(initialArticles);
+                if (response.isSuccessful() && response.body() != null && response.body().getArticles() != null) {
+                    Set<String> titles = new HashSet<>();
+                    for (Article a : initialArticles) {
+                        if (a.getTitle() != null) titles.add(a.getTitle().toLowerCase(Locale.getDefault()));
+                    }
+                    for (Article a : response.body().getArticles()) {
+                        if (a.getTitle() != null && !titles.contains(a.getTitle().toLowerCase(Locale.getDefault()))) {
+                            merged.add(a);
+                            titles.add(a.getTitle().toLowerCase(Locale.getDefault()));
+                        }
+                    }
+                }
+                saveToCache(cacheKey, merged);
+                setSanitizedArticles(merged);
+                if (tvRadiusBannerMode != null) {
+                    String baseMode = (placeLabel != null && !placeLabel.equals("Live GPS"))
+                            ? placeLabel.toUpperCase(Locale.getDefault())
+                            : "LIVE GPS";
+                    tvRadiusBannerMode.setText(baseMode + " • 20 KM RADIUS (EXPANDED)");
+                }
+            }
+
+            @Override
+            public void onFailure(Call<NewsResponse> call, Throwable t) {
+                saveToCache(cacheKey, initialArticles);
+                setSanitizedArticles(initialArticles);
             }
         });
     }
