@@ -30,6 +30,10 @@ import android.os.Build;
 import android.speech.tts.TextToSpeech;
 import androidx.recyclerview.widget.PagerSnapHelper;
 import java.util.Locale;
+import android.graphics.Bitmap;
+import android.provider.MediaStore;
+import android.util.Base64;
+import java.io.ByteArrayOutputStream;
 
 import com.example.global_insights.Adapter.NewsAdapter;
 import com.example.global_insights.model.Article;
@@ -148,10 +152,59 @@ public class HomeActivity extends AppCompatActivity {
     private boolean isSnapHelperAttached = false;
     private String currentlySpeakingTitle = "";
 
+    // Mandatory live camera capture fields for community notices (no gallery allowed)
+    private androidx.activity.result.ActivityResultLauncher<Intent> takePictureLauncher;
+    private androidx.activity.result.ActivityResultLauncher<String> requestCameraPermissionLauncher;
+    private Bitmap currentCapturedNoticeBitmap = null;
+    private ImageView activeDialogPhotoPreview = null;
+    private View activeDialogCardPrompt = null;
+    private View activeDialogCardPreview = null;
+    private TextView activeDialogPhotoWarning = null;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
+
+        // Hardware camera launcher for live proof-of-presence photo
+        takePictureLauncher = registerForActivityResult(
+                new androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                        Bundle extras = result.getData().getExtras();
+                        Bitmap imageBitmap = null;
+                        if (extras != null && extras.get("data") instanceof Bitmap) {
+                            imageBitmap = (Bitmap) extras.get("data");
+                        }
+                        if (imageBitmap != null) {
+                            currentCapturedNoticeBitmap = imageBitmap;
+                            if (activeDialogPhotoPreview != null) {
+                                activeDialogPhotoPreview.setImageBitmap(imageBitmap);
+                            }
+                            if (activeDialogCardPrompt != null) {
+                                activeDialogCardPrompt.setVisibility(View.GONE);
+                            }
+                            if (activeDialogCardPreview != null) {
+                                activeDialogCardPreview.setVisibility(View.VISIBLE);
+                            }
+                            if (activeDialogPhotoWarning != null) {
+                                activeDialogPhotoWarning.setVisibility(View.GONE);
+                            }
+                        }
+                    }
+                }
+        );
+
+        requestCameraPermissionLauncher = registerForActivityResult(
+                new androidx.activity.result.contract.ActivityResultContracts.RequestPermission(),
+                isGranted -> {
+                    if (isGranted) {
+                        launchLiveCamera();
+                    } else {
+                        Toast.makeText(this, "Camera permission is required to capture live proof and prevent fake news.", Toast.LENGTH_LONG).show();
+                    }
+                }
+        );
 
         tabLayout = findViewById(R.id.tabLayout);
         newsRecyclerView = findViewById(R.id.newsRecyclerView);
@@ -1884,11 +1937,32 @@ public class HomeActivity extends AppCompatActivity {
         bottomSheet.show(getSupportFragmentManager(), "SavedLocationsBottomSheet");
     }
 
+    private void launchLiveCamera() {
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA)
+                == PackageManager.PERMISSION_GRANTED) {
+            Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            try {
+                takePictureLauncher.launch(takePictureIntent);
+            } catch (Exception e) {
+                Toast.makeText(this, "Cannot launch camera: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        } else {
+            requestCameraPermissionLauncher.launch(android.Manifest.permission.CAMERA);
+        }
+    }
+
     private void showPostCommunityNoticeDialog() {
         com.google.android.material.bottomsheet.BottomSheetDialog dialog =
                 new com.google.android.material.bottomsheet.BottomSheetDialog(this);
         View sheetView = getLayoutInflater().inflate(R.layout.dialog_post_community_notice, null);
         dialog.setContentView(sheetView);
+        if (dialog.getBehavior() != null) {
+            dialog.getBehavior().setState(com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED);
+            dialog.getBehavior().setSkipCollapsed(true);
+        }
+
+        // Reset any previously captured photo for clean session
+        currentCapturedNoticeBitmap = null;
 
         TextView tvPostNoticeLocation = sheetView.findViewById(R.id.tvPostNoticeLocation);
         EditText etNoticeTitle = sheetView.findViewById(R.id.etNoticeTitle);
@@ -1899,6 +1973,32 @@ public class HomeActivity extends AppCompatActivity {
         ProgressBar pbSubmitNotice = sheetView.findViewById(R.id.pbSubmitNotice);
         LinearLayout layoutRejectionNotice = sheetView.findViewById(R.id.layoutRejectionNotice);
         TextView tvRejectionReason = sheetView.findViewById(R.id.tvRejectionReason);
+
+        // Mandatory live camera photo views
+        View cardCapturePhoto = sheetView.findViewById(R.id.cardCapturePhoto);
+        View cardPhotoPreview = sheetView.findViewById(R.id.cardPhotoPreview);
+        ImageView ivCapturedPhotoPreview = sheetView.findViewById(R.id.ivCapturedPhotoPreview);
+        View btnRetakePhoto = sheetView.findViewById(R.id.btnRetakePhoto);
+        TextView tvPhotoRequiredWarning = sheetView.findViewById(R.id.tvPhotoRequiredWarning);
+
+        activeDialogPhotoPreview = ivCapturedPhotoPreview;
+        activeDialogCardPrompt = cardCapturePhoto;
+        activeDialogCardPreview = cardPhotoPreview;
+        activeDialogPhotoWarning = tvPhotoRequiredWarning;
+
+        if (cardCapturePhoto != null) {
+            cardCapturePhoto.setOnClickListener(v -> launchLiveCamera());
+        }
+        if (btnRetakePhoto != null) {
+            btnRetakePhoto.setOnClickListener(v -> launchLiveCamera());
+        }
+
+        dialog.setOnDismissListener(d -> {
+            activeDialogPhotoPreview = null;
+            activeDialogCardPrompt = null;
+            activeDialogCardPreview = null;
+            activeDialogPhotoWarning = null;
+        });
 
         com.google.android.material.chip.Chip chipRoleResident = sheetView.findViewById(R.id.chipRoleResident);
         com.google.android.material.chip.Chip chipRolePanchayat = sheetView.findViewById(R.id.chipRolePanchayat);
@@ -2019,6 +2119,26 @@ public class HomeActivity extends AppCompatActivity {
                 return;
             }
 
+            // Strict Anti-Fake-News Guard: Mandatory live camera photo proof required
+            if (currentCapturedNoticeBitmap == null) {
+                if (tvPhotoRequiredWarning != null) {
+                    tvPhotoRequiredWarning.setVisibility(View.VISIBLE);
+                }
+                Toast.makeText(HomeActivity.this, "Physical camera proof is mandatory! Please click a live photo from camera before broadcasting.", Toast.LENGTH_LONG).show();
+                return;
+            }
+
+            // Encode captured live photo to JPEG Base64
+            String base64Image = "";
+            try {
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                currentCapturedNoticeBitmap.compress(Bitmap.CompressFormat.JPEG, 85, baos);
+                base64Image = Base64.encodeToString(baos.toByteArray(), Base64.NO_WRAP);
+            } catch (Exception e) {
+                Log.e("HomeActivity", "Error compressing captured notice photo: " + e.getMessage());
+            }
+            final String finalBase64Image = base64Image;
+
             String authorRole = "Verified Resident";
             if (chipRolePanchayat != null && chipRolePanchayat.isChecked()) {
                 authorRole = "Panchayat Member";
@@ -2069,6 +2189,9 @@ public class HomeActivity extends AppCompatActivity {
                     payload.put("state", finalState != null ? finalState : "");
                     payload.put("lat", finalLat);
                     payload.put("lon", finalLon);
+                    if (finalBase64Image != null && !finalBase64Image.isEmpty()) {
+                        payload.put("image_base64", finalBase64Image);
+                    }
 
                     try (OutputStream os = conn.getOutputStream()) {
                         os.write(payload.toString().getBytes(StandardCharsets.UTF_8));

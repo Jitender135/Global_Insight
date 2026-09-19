@@ -1,10 +1,13 @@
 import os
+import re
 import json
 import time
 import uuid
+import base64
 from typing import List, Optional, Dict, Any
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from dotenv import load_dotenv
 
@@ -20,6 +23,11 @@ app = FastAPI(
     description="FastAPI Backend powered by Grok AI for story Q&A, caching, and grounded intelligence.",
     version="1.0.0"
 )
+
+# Static files for user-captured community spotlight live photos
+UPLOADS_DIR = os.path.join(os.path.dirname(__file__), "uploads")
+os.makedirs(UPLOADS_DIR, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")
 
 app.add_middleware(
     CORSMiddleware,
@@ -55,13 +63,26 @@ class CommunityPostRequest(BaseModel):
     state: Optional[str] = ""
     lat: Optional[float] = 0.0
     lon: Optional[float] = 0.0
+    image_base64: Optional[str] = None
 
 class CommunityUpvoteRequest(BaseModel):
     spotlight_id: str
 
 SPOTLIGHT_FILE = os.path.join(os.path.dirname(__file__), "data", "community_spotlights.json")
 
+# High-resolution, context-specific category images (both plain and emoji keys)
 CATEGORY_IMAGES = {
+    "Health & Blood Camp": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&auto=format&fit=crop&q=80",
+    "Health & Medical Camp": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&auto=format&fit=crop&q=80",
+    "Traffic & Road Repair": "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800&auto=format&fit=crop&q=80",
+    "Road Repair & Diversion": "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800&auto=format&fit=crop&q=80",
+    "Panchayat & Civic Notice": "https://images.unsplash.com/photo-1577495508048-b635879837f1?w=800&auto=format&fit=crop&q=80",
+    "Power & Water Schedule": "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=800&auto=format&fit=crop&q=80",
+    "Agriculture & Mandi": "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=800&auto=format&fit=crop&q=80",
+    "School & Student Notice": "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800&auto=format&fit=crop&q=80",
+    "Emergency Alert": "https://images.unsplash.com/photo-1582139329536-e7284fece509?w=800&auto=format&fit=crop&q=80",
+    "Local Culture & Events": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&auto=format&fit=crop&q=80",
+    # Emoji-prefixed aliases
     "🏥 Health & Blood Camp": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&auto=format&fit=crop&q=80",
     "🚧 Traffic & Road Repair": "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800&auto=format&fit=crop&q=80",
     "📢 Panchayat & Civic Notice": "https://images.unsplash.com/photo-1577495508048-b635879837f1?w=800&auto=format&fit=crop&q=80",
@@ -118,12 +139,12 @@ def _find_matching_spotlights(village: str = "", tehsil: str = "", district: str
         if is_match:
             matches.append(s)
 
-    # Sort: High urgency first, then highest upvotes/newest
+    # Sort: High urgency first, then newest timestamp, then upvotes
     matches.sort(
         key=lambda x: (
             1 if x.get("urgency") == "High" else 0,
-            x.get("upvotes", 0),
-            x.get("timestamp", 0)
+            x.get("timestamp", 0),
+            x.get("upvotes", 0)
         ),
         reverse=True
     )
@@ -193,6 +214,22 @@ async def post_community_notice(req: CommunityPostRequest):
     now_ts = time.time()
     created_str = "Just now"
 
+    # Decode and save mandatory live camera reference photo if provided
+    image_url = None
+    if req.image_base64 and req.image_base64.strip():
+        try:
+            raw_b64 = req.image_base64.strip()
+            if "," in raw_b64:
+                raw_b64 = raw_b64.split(",", 1)[1]
+            img_bytes = base64.b64decode(raw_b64)
+            img_filename = f"spotlight_{int(now_ts)}_{uuid.uuid4().hex[:6]}.jpg"
+            img_path = os.path.join(UPLOADS_DIR, img_filename)
+            with open(img_path, "wb") as f:
+                f.write(img_bytes)
+            image_url = f"http://10.0.2.2:8085/uploads/{img_filename}"
+        except Exception as e:
+            print(f"Error saving user camera photo: {e}")
+
     new_spotlight = {
         "id": f"spotlight_{int(now_ts)}_{uuid.uuid4().hex[:6]}",
         "title": req.title.strip(),
@@ -201,13 +238,14 @@ async def post_community_notice(req: CommunityPostRequest):
         "polished_content": mod_result.get("polished_content") or req.content.strip(),
         "author_name": req.author_name.strip() if req.author_name else "Local Resident",
         "author_role": req.author_role.strip() if req.author_role else "Verified Resident",
-        "category": mod_result.get("category") or "📢 Panchayat & Civic Notice",
+        "category": mod_result.get("category") or "Panchayat & Civic Notice",
         "village": req.village.strip() if req.village else "",
         "tehsil": req.tehsil.strip() if req.tehsil else "",
         "district": req.district.strip() if req.district else "",
         "state": req.state.strip() if req.state else "",
         "lat": req.lat or 0.0,
         "lon": req.lon or 0.0,
+        "image_url": image_url,
         "created_at": created_str,
         "timestamp": now_ts,
         "urgency": mod_result.get("urgency") or "Normal",
@@ -447,8 +485,21 @@ async def get_radius_news(
         matching_spots = _find_matching_spotlights(village_name, tehsil_name, district_name, state_name)
         spotlight_articles = []
         for s in matching_spots:
-            cat = s.get("category", "📢 Panchayat & Civic Notice")
-            img = CATEGORY_IMAGES.get(cat, DEFAULT_SPOTLIGHT_IMAGE)
+            cat = s.get("category", "Panchayat & Civic Notice")
+            # 1. Use user's live captured camera photo if available
+            img = s.get("image_url")
+            # 2. Fall back to distinct category image
+            if not img:
+                clean_cat = re.sub(r'[^\w\s&]', '', cat).strip()
+                img = CATEGORY_IMAGES.get(clean_cat)
+                if not img:
+                    for k, v in CATEGORY_IMAGES.items():
+                        if clean_cat.lower() in k.lower() or k.lower() in clean_cat.lower():
+                            img = v
+                            break
+            if not img:
+                img = DEFAULT_SPOTLIGHT_IMAGE
+
             loc_tag = s.get("village") or s.get("tehsil") or s.get("district") or "Local Area"
             spotlight_articles.append({
                 "id": s.get("id"),
