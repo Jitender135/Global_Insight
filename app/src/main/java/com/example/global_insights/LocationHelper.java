@@ -43,7 +43,14 @@ public class LocationHelper {
     }
 
     public interface OnGeocodeResultListener {
-        void onGeocodeSuccess(String addressLine, String subLocality, String locality, String postalCode);
+        void onGeocodeSuccess(
+                String addressLine,
+                String villageOrColony,
+                String tehsilOrBlock,
+                String district,
+                String state,
+                String postalCode
+        );
         void onGeocodeFailed(String errorMessage);
     }
 
@@ -190,27 +197,40 @@ public class LocationHelper {
                         subLocality = addr.getFeatureName();
                     }
 
-                    String locality = addr.getLocality();
-                    if (locality == null || locality.trim().isEmpty()) {
-                        locality = addr.getSubAdminArea();
+                    String subAdminArea = addr.getSubAdminArea(); // Tehsil / Sub-district / Taluk / Block
+                    String locality = addr.getLocality();         // District / City
+                    String adminArea = addr.getAdminArea();       // State
+                    String postalCode = addr.getPostalCode();
+
+                    String district = locality;
+                    if (district == null || district.trim().isEmpty()) {
+                        district = subAdminArea;
                     }
-                    if (locality == null || locality.trim().isEmpty()) {
-                        locality = addr.getAdminArea();
+                    if (district == null || district.trim().isEmpty()) {
+                        district = adminArea;
                     }
 
-                    String postalCode = addr.getPostalCode();
+                    String tehsil = subAdminArea != null ? subAdminArea.trim() : "";
+                    String village = subLocality != null ? subLocality.trim() : "";
+                    String state = adminArea != null ? adminArea.trim() : "";
+                    String finalDistrict = district != null ? district.trim() : "";
+                    String finalPostalCode = postalCode != null ? postalCode.trim() : "";
 
                     // Format pretty address line
                     StringBuilder sb = new StringBuilder();
-                    if (subLocality != null && !subLocality.trim().isEmpty()) {
-                        sb.append(subLocality.trim());
+                    if (!village.isEmpty()) {
+                        sb.append(village);
                     }
-                    if (locality != null && !locality.trim().isEmpty()) {
+                    if (!tehsil.isEmpty() && !tehsil.equalsIgnoreCase(village) && !tehsil.equalsIgnoreCase(finalDistrict)) {
                         if (sb.length() > 0) sb.append(", ");
-                        sb.append(locality.trim());
+                        sb.append(tehsil);
                     }
-                    if (postalCode != null && !postalCode.trim().isEmpty()) {
-                        sb.append(" (").append(postalCode.trim()).append(")");
+                    if (!finalDistrict.isEmpty() && !finalDistrict.equalsIgnoreCase(village) && !finalDistrict.equalsIgnoreCase(tehsil)) {
+                        if (sb.length() > 0) sb.append(", ");
+                        sb.append(finalDistrict);
+                    }
+                    if (!finalPostalCode.isEmpty()) {
+                        sb.append(" (").append(finalPostalCode).append(")");
                     }
 
                     String rawAddressLine = sb.toString();
@@ -218,15 +238,12 @@ public class LocationHelper {
                             ? rawAddressLine
                             : String.format(Locale.getDefault(), "Lat: %.3f, Lon: %.3f", latitude, longitude);
 
-
-                    String finalSubLocality = subLocality != null ? subLocality.trim() : "";
-                    String finalLocality = locality != null ? locality.trim() : "";
-                    String finalPostalCode = postalCode != null ? postalCode.trim() : "";
-
                     mainHandler.post(() -> listener.onGeocodeSuccess(
                             finalAddressLine,
-                            finalSubLocality,
-                            finalLocality,
+                            village,
+                            tehsil,
+                            finalDistrict,
+                            state,
                             finalPostalCode
                     ));
                 } else {

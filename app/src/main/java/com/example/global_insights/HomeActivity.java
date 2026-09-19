@@ -100,7 +100,10 @@ public class HomeActivity extends AppCompatActivity {
     private double currentGpsLon = 0.0;
     private String currentGpsAddress = "";
     private String currentGpsSubLocality = "";
+    private String currentGpsTehsil = "";
     private String currentGpsLocality = "";
+    private String currentGpsDistrict = "";
+    private String currentGpsState = "";
     private String currentGpsPostalCode = "";
 
 
@@ -1396,7 +1399,9 @@ public class HomeActivity extends AppCompatActivity {
                     activeSaved.getLatitude(),
                     activeSaved.getLongitude(),
                     activeSaved.getSubLocality(),
+                    "",
                     activeSaved.getLocality(),
+                    "",
                     activeSaved.getPostalCode(),
                     activeSaved.getLabel()
             );
@@ -1459,17 +1464,20 @@ public class HomeActivity extends AppCompatActivity {
                 // Reverse geocode to get neighborhood / campus / pincode
                 LocationHelper.reverseGeocode(HomeActivity.this, latitude, longitude, new LocationHelper.OnGeocodeResultListener() {
                     @Override
-                    public void onGeocodeSuccess(String addressLine, String subLocality, String locality, String postalCode) {
+                    public void onGeocodeSuccess(String addressLine, String villageOrColony, String tehsilOrBlock, String district, String state, String postalCode) {
                         currentGpsAddress = addressLine;
-                        currentGpsSubLocality = subLocality;
-                        currentGpsLocality = locality;
+                        currentGpsSubLocality = villageOrColony;
+                        currentGpsTehsil = tehsilOrBlock;
+                        currentGpsLocality = district;
+                        currentGpsDistrict = district;
+                        currentGpsState = state;
                         currentGpsPostalCode = postalCode;
 
                         if (tvRadiusBannerLocation != null) {
                             tvRadiusBannerLocation.setText(addressLine);
                         }
 
-                        fetchRadiusNews(latitude, longitude, subLocality, locality, postalCode, "Live GPS");
+                        fetchRadiusNews(latitude, longitude, villageOrColony, tehsilOrBlock, district, state, postalCode, "Live GPS");
                     }
 
                     @Override
@@ -1478,7 +1486,7 @@ public class HomeActivity extends AppCompatActivity {
                         if (tvRadiusBannerLocation != null) {
                             tvRadiusBannerLocation.setText(currentGpsAddress);
                         }
-                        fetchRadiusNews(latitude, longitude, "", "India", "", "Live GPS");
+                        fetchRadiusNews(latitude, longitude, "", "", "India", "", "", "Live GPS");
                     }
                 });
             }
@@ -1494,8 +1502,8 @@ public class HomeActivity extends AppCompatActivity {
         });
     }
 
-    private void fetchRadiusNews(double lat, double lon, String subLocality, String locality, String postalCode, String placeLabel) {
-        String cacheKey = "radius_" + (subLocality != null ? subLocality : "") + "_" + (locality != null ? locality : "") + "_" + (postalCode != null ? postalCode : "");
+    private void fetchRadiusNews(double lat, double lon, String village, String tehsil, String district, String state, String postalCode, String placeLabel) {
+        String cacheKey = "radius_" + (village != null ? village : "") + "_" + (tehsil != null ? tehsil : "") + "_" + (district != null ? district : "") + "_" + (postalCode != null ? postalCode : "");
         if (isCacheValid(cacheKey)) {
             setSanitizedArticles(tabArticleCache.get(cacheKey));
             return;
@@ -1513,11 +1521,17 @@ public class HomeActivity extends AppCompatActivity {
                 StringBuilder urlBuilder = new StringBuilder(backendBase + "/api/radius-news?");
                 if (lat != 0.0) urlBuilder.append("lat=").append(lat).append("&");
                 if (lon != 0.0) urlBuilder.append("lon=").append(lon).append("&");
-                if (subLocality != null && !subLocality.isEmpty()) {
-                    urlBuilder.append("sublocality=").append(URLEncoder.encode(subLocality, "UTF-8")).append("&");
+                if (village != null && !village.isEmpty()) {
+                    urlBuilder.append("village=").append(URLEncoder.encode(village, "UTF-8")).append("&");
                 }
-                if (locality != null && !locality.isEmpty()) {
-                    urlBuilder.append("locality=").append(URLEncoder.encode(locality, "UTF-8")).append("&");
+                if (tehsil != null && !tehsil.isEmpty()) {
+                    urlBuilder.append("tehsil=").append(URLEncoder.encode(tehsil, "UTF-8")).append("&");
+                }
+                if (district != null && !district.isEmpty()) {
+                    urlBuilder.append("district=").append(URLEncoder.encode(district, "UTF-8")).append("&");
+                }
+                if (state != null && !state.isEmpty()) {
+                    urlBuilder.append("state=").append(URLEncoder.encode(state, "UTF-8")).append("&");
                 }
                 if (postalCode != null && !postalCode.isEmpty()) {
                     urlBuilder.append("postal_code=").append(URLEncoder.encode(postalCode, "UTF-8")).append("&");
@@ -1545,6 +1559,11 @@ public class HomeActivity extends AppCompatActivity {
                         backendSuccess = true;
                         final boolean isExpanded = response.isExpanded();
                         final int effectiveRadius = response.getRadiusKm() > 0 ? response.getRadiusKm() : 10;
+                        final String geoLevel = response.getGeoLevel();
+                        final String geoLabel = response.getGeoLabel();
+                        final String area = response.getArea();
+                        final String expansionReason = response.getExpansionReason();
+
                         mainHandler.post(() -> {
                             saveToCache(cacheKey, response.getArticles());
                             setSanitizedArticles(response.getArticles());
@@ -1553,11 +1572,21 @@ public class HomeActivity extends AppCompatActivity {
                                 String baseMode = (placeLabel != null && !placeLabel.equals("Live GPS"))
                                         ? placeLabel.toUpperCase(Locale.getDefault())
                                         : "LIVE GPS";
-                                if (isExpanded) {
+                                if ("tehsil".equalsIgnoreCase(geoLevel) && geoLabel != null && !geoLabel.isEmpty()) {
+                                    tvRadiusBannerMode.setText(baseMode + " • TEHSIL " + geoLabel.toUpperCase(Locale.getDefault()) + " (10 KM)");
+                                } else if ("district".equalsIgnoreCase(geoLevel) && geoLabel != null && !geoLabel.isEmpty()) {
+                                    tvRadiusBannerMode.setText(baseMode + " • " + geoLabel.toUpperCase(Locale.getDefault()) + " DISTRICT (20 KM)");
+                                } else if (isExpanded) {
                                     tvRadiusBannerMode.setText(baseMode + " • 20 KM RADIUS (EXPANDED)");
                                 } else {
                                     tvRadiusBannerMode.setText(baseMode + " • " + effectiveRadius + " KM RADIUS");
                                 }
+                            }
+                            if (tvRadiusBannerLocation != null && area != null && !area.isEmpty() && !"Nearby".equals(area)) {
+                                tvRadiusBannerLocation.setText(area);
+                            }
+                            if (expansionReason != null && !expansionReason.isEmpty()) {
+                                Toast.makeText(HomeActivity.this, expansionReason, Toast.LENGTH_SHORT).show();
                             }
                         });
                     }
@@ -1567,20 +1596,22 @@ public class HomeActivity extends AppCompatActivity {
             }
 
             if (!backendSuccess) {
-                mainHandler.post(() -> fetchRadiusNewsFallback(cacheKey, subLocality, locality, placeLabel));
+                mainHandler.post(() -> fetchRadiusNewsFallback(cacheKey, village, tehsil, district, placeLabel));
             }
         });
     }
 
-    private void fetchRadiusNewsFallback(String cacheKey, String subLocality, String locality, String placeLabel) {
+    private void fetchRadiusNewsFallback(String cacheKey, String village, String tehsil, String district, String placeLabel) {
         SharedPreferences preferences = getSharedPreferences("user_preferences", MODE_PRIVATE);
         String languageCode = preferences.getString("selected_language", "en");
 
         String query;
-        if (subLocality != null && !subLocality.isEmpty()) {
-            query = (subLocality + " " + (locality != null ? locality : "")).trim();
-        } else if (locality != null && !locality.isEmpty()) {
-            query = locality + " news";
+        if (village != null && !village.isEmpty()) {
+            query = (village + " " + (district != null ? district : "")).trim();
+        } else if (tehsil != null && !tehsil.isEmpty()) {
+            query = (tehsil + " " + (district != null ? district : "") + " news").trim();
+        } else if (district != null && !district.isEmpty()) {
+            query = district + " news";
         } else {
             query = "India local news";
         }
@@ -1593,9 +1624,10 @@ public class HomeActivity extends AppCompatActivity {
             public void onResponse(Call<NewsResponse> call, Response<NewsResponse> response) {
                 if (response.isSuccessful() && response.body() != null && response.body().getArticles() != null && !response.body().getArticles().isEmpty()) {
                     List<Article> articles = response.body().getArticles();
-                    if (articles.size() < 5 && locality != null && !locality.isEmpty()) {
-                        // Smart Auto-Expansion to 20 km (broader locality/district news)
-                        fetchExpandedFallback(cacheKey, articles, locality, placeLabel);
+                    if (articles.size() < 5 && tehsil != null && !tehsil.isEmpty() && !tehsil.equalsIgnoreCase(village)) {
+                        fetchTehsilOrDistrictFallback(cacheKey, articles, tehsil, district, placeLabel);
+                    } else if (articles.size() < 5 && district != null && !district.isEmpty()) {
+                        fetchDistrictFallback(cacheKey, articles, district, placeLabel);
                     } else {
                         saveToCache(cacheKey, articles);
                         setSanitizedArticles(articles);
@@ -1607,23 +1639,73 @@ public class HomeActivity extends AppCompatActivity {
                         }
                     }
                 } else {
-                    fetchLocationNewsFallback(locality, (locality != null && !locality.isEmpty() ? locality : "India") + " news");
+                    fetchLocationNewsFallback(district, (district != null && !district.isEmpty() ? district : "India") + " news");
                 }
             }
 
             @Override
             public void onFailure(Call<NewsResponse> call, Throwable t) {
-                fetchLocationNewsFallback(locality, (locality != null && !locality.isEmpty() ? locality : "India") + " news");
+                fetchLocationNewsFallback(district, (district != null && !district.isEmpty() ? district : "India") + " news");
             }
         });
     }
 
-    private void fetchExpandedFallback(String cacheKey, List<Article> initialArticles, String locality, String placeLabel) {
+    private void fetchTehsilOrDistrictFallback(String cacheKey, List<Article> initialArticles, String tehsil, String district, String placeLabel) {
         SharedPreferences preferences = getSharedPreferences("user_preferences", MODE_PRIVATE);
         String languageCode = preferences.getString("selected_language", "en");
 
         NewsApiService apiService = ApiClient.getClient().create(NewsApiService.class);
-        Call<NewsResponse> call = apiService.getEverything(locality + " news", API_KEY, languageCode);
+        Call<NewsResponse> call = apiService.getEverything(tehsil + " news", API_KEY, languageCode);
+
+        call.enqueue(new Callback<NewsResponse>() {
+            @Override
+            public void onResponse(Call<NewsResponse> call, Response<NewsResponse> response) {
+                List<Article> merged = new ArrayList<>(initialArticles);
+                if (response.isSuccessful() && response.body() != null && response.body().getArticles() != null) {
+                    Set<String> titles = new HashSet<>();
+                    for (Article a : initialArticles) {
+                        if (a.getTitle() != null) titles.add(a.getTitle().toLowerCase(Locale.getDefault()));
+                    }
+                    for (Article a : response.body().getArticles()) {
+                        if (a.getTitle() != null && !titles.contains(a.getTitle().toLowerCase(Locale.getDefault()))) {
+                            merged.add(a);
+                            titles.add(a.getTitle().toLowerCase(Locale.getDefault()));
+                        }
+                    }
+                }
+
+                if (merged.size() < 5 && district != null && !district.isEmpty()) {
+                    fetchDistrictFallback(cacheKey, merged, district, placeLabel);
+                } else {
+                    saveToCache(cacheKey, merged);
+                    setSanitizedArticles(merged);
+                    if (tvRadiusBannerMode != null) {
+                        String baseMode = (placeLabel != null && !placeLabel.equals("Live GPS"))
+                                ? placeLabel.toUpperCase(Locale.getDefault())
+                                : "LIVE GPS";
+                        tvRadiusBannerMode.setText(baseMode + " • TEHSIL " + tehsil.toUpperCase(Locale.getDefault()) + " (10 KM)");
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<NewsResponse> call, Throwable t) {
+                if (district != null && !district.isEmpty()) {
+                    fetchDistrictFallback(cacheKey, initialArticles, district, placeLabel);
+                } else {
+                    saveToCache(cacheKey, initialArticles);
+                    setSanitizedArticles(initialArticles);
+                }
+            }
+        });
+    }
+
+    private void fetchDistrictFallback(String cacheKey, List<Article> initialArticles, String district, String placeLabel) {
+        SharedPreferences preferences = getSharedPreferences("user_preferences", MODE_PRIVATE);
+        String languageCode = preferences.getString("selected_language", "en");
+
+        NewsApiService apiService = ApiClient.getClient().create(NewsApiService.class);
+        Call<NewsResponse> call = apiService.getEverything(district + " news", API_KEY, languageCode);
 
         call.enqueue(new Callback<NewsResponse>() {
             @Override
@@ -1647,7 +1729,7 @@ public class HomeActivity extends AppCompatActivity {
                     String baseMode = (placeLabel != null && !placeLabel.equals("Live GPS"))
                             ? placeLabel.toUpperCase(Locale.getDefault())
                             : "LIVE GPS";
-                    tvRadiusBannerMode.setText(baseMode + " • 20 KM RADIUS (EXPANDED)");
+                    tvRadiusBannerMode.setText(baseMode + " • " + district.toUpperCase(Locale.getDefault()) + " DISTRICT (20 KM)");
                 }
             }
 

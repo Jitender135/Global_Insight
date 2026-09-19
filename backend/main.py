@@ -147,6 +147,10 @@ def _fetch_google_news_rss(search_query: str, sublocality: str = "", locality: s
 def get_radius_news(
     lat: Optional[float] = None,
     lon: Optional[float] = None,
+    village: Optional[str] = "",
+    tehsil: Optional[str] = "",
+    district: Optional[str] = "",
+    state: Optional[str] = "",
     sublocality: Optional[str] = "",
     locality: Optional[str] = "",
     postal_code: Optional[str] = "",
@@ -154,61 +158,122 @@ def get_radius_news(
     radius: Optional[int] = 10
 ):
     """
-    Fetches real-time hyper-local news for exact 10km radius.
-    Smart Auto-Expansion: If fewer than 5 articles are found within 10 km,
-    automatically expands the search radius to 20 km.
+    Fetches real-time hyper-local news with Hierarchical Administrative Geo-Stepping:
+    Level 1: Village / Colony / Immediate Neighborhood
+    Level 2: Tehsil / Block / Sub-District (if village has < 5 stories)
+    Level 3: District Rural & Urban Belt (if tehsil has < 5 stories)
+    Level 4: State / Regional News
     """
     try:
-        # Step 1: 10 km focused query
+        village_name = (village or sublocality or "").strip()
+        tehsil_name = (tehsil or "").strip()
+        district_name = (district or locality or "").strip()
+        state_name = (state or "").strip()
+
+        articles = []
+        existing_urls = set()
+        existing_titles = set()
+
+        def _merge_articles(new_items):
+            for item in new_items:
+                url = item.get("url")
+                title = item.get("title")
+                if url not in existing_urls and title not in existing_titles:
+                    item["id"] = str(len(articles) + 1)
+                    articles.append(item)
+                    existing_urls.add(url)
+                    existing_titles.add(title)
+
+        # -------------------------------------------------------------
+        # Level 1: Village / Colony / Sublocality (Immediate 10 km)
+        # -------------------------------------------------------------
+        geo_level = "village"
+        geo_label = village_name or district_name or "Local Area"
+        effective_radius = radius or 10
+        is_expanded = False
+        expansion_reason = None
+
         query_parts = []
-        if sublocality and sublocality.strip():
-            query_parts.append(sublocality.strip())
-        if locality and locality.strip() and locality.strip().lower() != (sublocality or "").strip().lower():
-            query_parts.append(locality.strip())
+        if village_name:
+            query_parts.append(village_name)
+        if district_name and district_name.lower() != village_name.lower():
+            query_parts.append(district_name)
         if query and query.strip():
             query_parts.append(query.strip())
         if not query_parts and postal_code and postal_code.strip():
             query_parts.append(postal_code.strip())
 
-        search_query_10km = " ".join(query_parts) if query_parts else (locality or "India") + " local news"
-        articles = _fetch_google_news_rss(search_query_10km, sublocality, locality)
+        query_level1 = " ".join(query_parts) if query_parts else (district_name or "India") + " local news"
+        level1_articles = _fetch_google_news_rss(query_level1, village_name, district_name)
+        _merge_articles(level1_articles)
 
-        effective_radius = radius or 10
-        is_expanded = False
-        expansion_reason = None
+        # -------------------------------------------------------------
+        # Level 2: Tehsil / Block / Sub-District Auto-Stepping (< 5 stories)
+        # -------------------------------------------------------------
+        if len(articles) < 5 and tehsil_name and tehsil_name.lower() != village_name.lower():
+            geo_level = "tehsil"
+            geo_label = tehsil_name
+            is_expanded = True
+            expansion_reason = f"Aggregated from your governing Tehsil/Block ({tehsil_name})"
 
-        # Step 2: Smart Auto-Expansion to 20 km if fewer than 5 articles
-        if len(articles) < 5:
+            tehsil_parts = [tehsil_name]
+            if district_name and district_name.lower() != tehsil_name.lower():
+                tehsil_parts.append(district_name)
+            query_level2 = " ".join(tehsil_parts) + " news"
+
+            level2_articles = _fetch_google_news_rss(query_level2, tehsil_name, district_name)
+            _merge_articles(level2_articles)
+
+        # -------------------------------------------------------------
+        # Level 3: District Rural & Urban Belt Auto-Stepping (< 5 stories)
+        # -------------------------------------------------------------
+        if len(articles) < 5 and district_name:
+            geo_level = "district"
+            geo_label = district_name
             is_expanded = True
             effective_radius = 20
-            expansion_reason = f"Expanded to 20 km radius to bring you more local stories near {sublocality or locality}."
+            expansion_reason = f"Expanded to District {district_name} (20 km radius) to bring you surrounding local updates"
 
-            expanded_parts = []
-            if locality and locality.strip():
-                expanded_parts.append(locality.strip())
-            elif sublocality and sublocality.strip():
-                expanded_parts.append(sublocality.strip())
+            query_level3 = f"{district_name} news"
+            level3_articles = _fetch_google_news_rss(query_level3, village_name or tehsil_name, district_name)
+            _merge_articles(level3_articles)
 
-            expanded_query = (" ".join(expanded_parts) + " news") if expanded_parts else "India local news"
-            expanded_articles = _fetch_google_news_rss(expanded_query, sublocality, locality)
+        # -------------------------------------------------------------
+        # Level 4: State Regional Safety Net (< 5 stories)
+        # -------------------------------------------------------------
+        if len(articles) < 5 and state_name:
+            geo_level = "state"
+            geo_label = state_name
+            is_expanded = True
+            effective_radius = 25
+            expansion_reason = f"Expanded to {state_name} regional news"
 
-            # Deduplicate and append
-            existing_urls = {a.get("url") for a in articles}
-            existing_titles = {a.get("title") for a in articles}
-            for ea in expanded_articles:
-                if ea.get("url") not in existing_urls and ea.get("title") not in existing_titles:
-                    ea["id"] = str(len(articles) + 1)
-                    articles.append(ea)
-                    existing_urls.add(ea.get("url"))
-                    existing_titles.add(ea.get("title"))
+            query_level4 = f"{state_name} local news"
+            level4_articles = _fetch_google_news_rss(query_level4, "", state_name)
+            _merge_articles(level4_articles)
+
+        # Fallback if still 0
+        if not articles:
+            level_fallback = _fetch_google_news_rss("India local news", "", "")
+            _merge_articles(level_fallback)
+
+        display_area = village_name
+        if geo_level == "tehsil":
+            display_area = f"{village_name} (Tehsil {tehsil_name})" if village_name else f"Tehsil {tehsil_name}"
+        elif geo_level == "district":
+            display_area = f"{district_name} District"
+        elif geo_level == "state":
+            display_area = f"{state_name} Region"
 
         return {
             "status": "ok",
             "totalResults": len(articles),
             "radiusKm": effective_radius,
             "isExpanded": is_expanded,
+            "geoLevel": geo_level,
+            "geoLabel": geo_label,
             "expansionReason": expansion_reason,
-            "area": sublocality or locality or "Nearby",
+            "area": display_area or "Nearby",
             "articles": articles
         }
 
@@ -220,6 +285,8 @@ def get_radius_news(
             "totalResults": 0,
             "radiusKm": radius or 10,
             "isExpanded": False,
+            "geoLevel": "unknown",
+            "geoLabel": "",
             "expansionReason": None,
             "articles": []
         }

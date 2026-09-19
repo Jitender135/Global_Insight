@@ -10,6 +10,8 @@ public class NewsResponse {
     private boolean isExpanded;
     private String expansionReason;
     private String area;
+    private String geoLevel; // "village", "tehsil", "district", "state"
+    private String geoLabel; // e.g. "Kharkhari", "Farrukhnagar", "Gurugram"
 
     public String getStatus() {
         return status;
@@ -37,5 +39,13 @@ public class NewsResponse {
 
     public String getArea() {
         return area;
+    }
+
+    public String getGeoLevel() {
+        return geoLevel;
+    }
+
+    public String getGeoLabel() {
+        return geoLabel;
     }
 }
