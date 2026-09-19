@@ -31,6 +31,10 @@ import android.speech.tts.TextToSpeech;
 import androidx.recyclerview.widget.PagerSnapHelper;
 import java.util.Locale;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+import android.media.ExifInterface;
+import java.io.File;
 import android.provider.MediaStore;
 import android.util.Base64;
 import java.io.ByteArrayOutputStream;
@@ -156,6 +160,7 @@ public class HomeActivity extends AppCompatActivity {
     private androidx.activity.result.ActivityResultLauncher<Intent> takePictureLauncher;
     private androidx.activity.result.ActivityResultLauncher<String> requestCameraPermissionLauncher;
     private Bitmap currentCapturedNoticeBitmap = null;
+    private File currentCameraPhotoFile = null;
     private ImageView activeDialogPhotoPreview = null;
     private View activeDialogCardPrompt = null;
     private View activeDialogCardPreview = null;
@@ -166,16 +171,53 @@ public class HomeActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
 
-        // Hardware camera launcher for live proof-of-presence photo
+        // Hardware camera launcher for live proof-of-presence photo (physical phone & emulator compatible)
         takePictureLauncher = registerForActivityResult(
                 new androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult(),
                 result -> {
-                    if (result.getResultCode() == RESULT_OK && result.getData() != null) {
-                        Bundle extras = result.getData().getExtras();
+                    if (result.getResultCode() == RESULT_OK) {
                         Bitmap imageBitmap = null;
-                        if (extras != null && extras.get("data") instanceof Bitmap) {
-                            imageBitmap = (Bitmap) extras.get("data");
+
+                        // 1. Primary: load full quality image from FileProvider photo file (best for real phones)
+                        if (currentCameraPhotoFile != null && currentCameraPhotoFile.exists() && currentCameraPhotoFile.length() > 0) {
+                            try {
+                                imageBitmap = decodeSampledBitmapFromFile(currentCameraPhotoFile.getAbsolutePath(), 1280, 1280);
+                                // Correct EXIF orientation for portrait mobile cameras (prevents 90-degree sideways rotation on Samsung/Xiaomi)
+                                ExifInterface exif = new ExifInterface(currentCameraPhotoFile.getAbsolutePath());
+                                int orientation = exif.getAttributeInt(
+                                        ExifInterface.TAG_ORIENTATION,
+                                        ExifInterface.ORIENTATION_NORMAL
+                                );
+                                int rotation = 0;
+                                if (orientation == ExifInterface.ORIENTATION_ROTATE_90) rotation = 90;
+                                else if (orientation == ExifInterface.ORIENTATION_ROTATE_180) rotation = 180;
+                                else if (orientation == ExifInterface.ORIENTATION_ROTATE_270) rotation = 270;
+
+                                if (rotation != 0 && imageBitmap != null) {
+                                    Matrix matrix = new Matrix();
+                                    matrix.postRotate(rotation);
+                                    imageBitmap = Bitmap.createBitmap(imageBitmap, 0, 0, imageBitmap.getWidth(), imageBitmap.getHeight(), matrix, true);
+                                }
+                            } catch (Exception e) {
+                                Log.e("HomeActivity", "Error loading camera photo file: " + e.getMessage());
+                            }
                         }
+
+                        // 2. Fallback: thumbnail in Intent extras (used by some emulators/webcams)
+                        if (imageBitmap == null && result.getData() != null) {
+                            Bundle extras = result.getData().getExtras();
+                            if (extras != null && extras.get("data") instanceof Bitmap) {
+                                imageBitmap = (Bitmap) extras.get("data");
+                            }
+                        }
+
+                        // 3. Fallback: URI returned directly in intent
+                        if (imageBitmap == null && result.getData() != null && result.getData().getData() != null) {
+                            try {
+                                imageBitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), result.getData().getData());
+                            } catch (Exception ignored) {}
+                        }
+
                         if (imageBitmap != null) {
                             currentCapturedNoticeBitmap = imageBitmap;
                             if (activeDialogPhotoPreview != null) {
@@ -1942,13 +1984,49 @@ public class HomeActivity extends AppCompatActivity {
                 == PackageManager.PERMISSION_GRANTED) {
             Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
             try {
+                // Ensure temporary file in cache for full-res capture on physical phones
+                currentCameraPhotoFile = new File(getCacheDir(), "spotlight_cam_" + System.currentTimeMillis() + ".jpg");
+                if (currentCameraPhotoFile.exists()) {
+                    currentCameraPhotoFile.delete();
+                }
+                Uri photoUri = androidx.core.content.FileProvider.getUriForFile(
+                        this,
+                        getPackageName() + ".fileprovider",
+                        currentCameraPhotoFile
+                );
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
+                takePictureIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 takePictureLauncher.launch(takePictureIntent);
             } catch (Exception e) {
-                Toast.makeText(this, "Cannot launch camera: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                // Fallback to simple intent if FileProvider setup fails on certain devices/emulators
+                try {
+                    currentCameraPhotoFile = null;
+                    takePictureLauncher.launch(takePictureIntent);
+                } catch (Exception ex) {
+                    Toast.makeText(this, "Cannot launch camera: " + ex.getMessage(), Toast.LENGTH_SHORT).show();
+                }
             }
         } else {
             requestCameraPermissionLauncher.launch(android.Manifest.permission.CAMERA);
         }
+    }
+
+    private static Bitmap decodeSampledBitmapFromFile(String path, int reqWidth, int reqHeight) {
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(path, options);
+
+        int inSampleSize = 1;
+        if (options.outHeight > reqHeight || options.outWidth > reqWidth) {
+            final int halfHeight = options.outHeight / 2;
+            final int halfWidth = options.outWidth / 2;
+            while ((halfHeight / inSampleSize) >= reqHeight && (halfWidth / inSampleSize) >= reqWidth) {
+                inSampleSize *= 2;
+            }
+        }
+        options.inSampleSize = inSampleSize;
+        options.inJustDecodeBounds = false;
+        return BitmapFactory.decodeFile(path, options);
     }
 
     private void showPostCommunityNoticeDialog() {
