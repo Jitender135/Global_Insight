@@ -1,7 +1,7 @@
 package com.example.global_insights.model;
 
 public class Article {
-    private String id;  // Define the id as a String or another data type based on your requirements.
+    private String id;
     private Source source;
     private String author;
     private String title;
@@ -10,7 +10,6 @@ public class Article {
     private String urlToImage;
     private String publishedAt;
 
-    // Getter and Setter for id
     public String getId() {
         return id;
     }
@@ -19,17 +18,28 @@ public class Article {
         this.id = id;
     }
 
-    // Getter methods for other fields
     public Source getSource() {
         return source;
+    }
+
+    public void setSource(Source source) {
+        this.source = source;
     }
 
     public String getAuthor() {
         return author;
     }
 
+    public void setAuthor(String author) {
+        this.author = author;
+    }
+
     public String getTitle() {
         return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
     }
 
     public String getDescription() {
@@ -44,11 +54,23 @@ public class Article {
         return url;
     }
 
+    public void setUrl(String url) {
+        this.url = url;
+    }
+
     public String getUrlToImage() {
         return urlToImage;
     }
 
+    public void setUrlToImage(String urlToImage) {
+        this.urlToImage = urlToImage;
+    }
+
     public String getPublishedAt() {
         return publishedAt;
+    }
+
+    public void setPublishedAt(String publishedAt) {
+        this.publishedAt = publishedAt;
     }
 }
