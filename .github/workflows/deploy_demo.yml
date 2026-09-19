@@ -45,10 +45,10 @@ jobs:
           APPETIZE_TOKEN: ${{ secrets.APPETIZE_API_TOKEN }}
         run: |
           if [ -n "$APPETIZE_TOKEN" ]; then
-            curl --fail --location --request POST 'https://api.appetize.io/v1/apps/b_yqpk4go7brlicoezty3lvcqawy' \
-            --header "Authorization: Bearer $APPETIZE_TOKEN" \
+            echo "Uploading build to Appetize.io..."
+            curl --location --request POST "https://api.appetize.io/v1/apps/b_yqpk4go7brlicoezty3lvcqawy?token=$APPETIZE_TOKEN" \
             --form 'file=@"app/build/outputs/apk/debug/app-debug.apk"' \
             --form 'platform="android"'
           else
-            echo "APPETIZE_API_TOKEN secret not configured yet. Skipping upload step."
+            echo "APPETIZE_API_TOKEN secret is not configured in GitHub repository secrets. Skipping upload."
           fi
