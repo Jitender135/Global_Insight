@@ -64,6 +64,8 @@ class CommunityPostRequest(BaseModel):
     lat: Optional[float] = 0.0
     lon: Optional[float] = 0.0
     image_base64: Optional[str] = None
+    user_id: Optional[str] = ""
+    user_email: Optional[str] = ""
 
 class CommunityUpvoteRequest(BaseModel):
     spotlight_id: str
@@ -238,6 +240,8 @@ async def post_community_notice(req: CommunityPostRequest):
         "polished_content": mod_result.get("polished_content") or req.content.strip(),
         "author_name": req.author_name.strip() if req.author_name else "Local Resident",
         "author_role": req.author_role.strip() if req.author_role else "Verified Resident",
+        "user_id": req.user_id.strip() if req.user_id else "",
+        "user_email": req.user_email.strip() if req.user_email else "",
         "category": mod_result.get("category") or "Panchayat & Civic Notice",
         "village": req.village.strip() if req.village else "",
         "tehsil": req.tehsil.strip() if req.tehsil else "",

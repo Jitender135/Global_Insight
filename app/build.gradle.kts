@@ -44,6 +44,7 @@ dependencies {
     // Firebase (use version catalog or hardcoded if needed)
     implementation(libs.firebase.auth.v2230)
     implementation("com.google.firebase:firebase-database:20.3.0")
+    implementation("com.google.firebase:firebase-firestore:25.1.2")
 
     // Retrofit for API calls
     implementation("com.squareup.retrofit2:retrofit:2.9.0")

@@ -53,6 +53,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.example.global_insights.Adapter.CategoryAdapter;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -2084,11 +2085,6 @@ public class HomeActivity extends AppCompatActivity {
         com.google.android.material.chip.Chip chipRoleDoctor = sheetView.findViewById(R.id.chipRoleDoctor);
         com.google.android.material.chip.Chip chipRoleMerchant = sheetView.findViewById(R.id.chipRoleMerchant);
 
-        TextView templateHealthCamp = sheetView.findViewById(R.id.templateHealthCamp);
-        TextView templateRoadRepair = sheetView.findViewById(R.id.templateRoadRepair);
-        TextView templatePowerCut = sheetView.findViewById(R.id.templatePowerCut);
-        TextView templateMandi = sheetView.findViewById(R.id.templateMandi);
-
         // Location label
         String locDisplay = currentGpsAddress;
         if (locDisplay == null || locDisplay.isEmpty()) {
@@ -2098,9 +2094,17 @@ public class HomeActivity extends AppCompatActivity {
             tvPostNoticeLocation.setText(locDisplay);
         }
 
+        // Ensure headline and details start completely empty (no pre-filled text)
+        if (etNoticeTitle != null) {
+            etNoticeTitle.setText("");
+        }
+        if (etNoticeContent != null) {
+            etNoticeContent.setText("");
+        }
+
         // Helper to update word count & colors dynamically
         Runnable updateWordCounter = () -> {
-            String text = etNoticeContent.getText().toString().trim();
+            String text = etNoticeContent != null ? etNoticeContent.getText().toString().trim() : "";
             int words = text.isEmpty() ? 0 : text.split("\\s+").length;
             if (tvWordCount != null) {
                 tvWordCount.setText(words + " / 60 words");
@@ -2128,39 +2132,8 @@ public class HomeActivity extends AppCompatActivity {
             }
         };
 
-        // Quick template clicks
-        if (templateHealthCamp != null) {
-            templateHealthCamp.setOnClickListener(v -> {
-                etNoticeTitle.setText("Free Health & Eye Checkup Camp at Local Dispensary");
-                etNoticeContent.setText("A free health and eye checkup camp is organized this Sunday from 9 AM to 2 PM at the local dispensary. Doctors will provide free consultations and basic medicine. All residents are welcome.");
-                if (chipRoleDoctor != null) chipRoleDoctor.setChecked(true);
-                updateWordCounter.run();
-            });
-        }
-        if (templateRoadRepair != null) {
-            templateRoadRepair.setOnClickListener(v -> {
-                etNoticeTitle.setText("Road Repair & Service Lane Diversion on Main Sector Road");
-                etNoticeContent.setText("Emergency road repair underway on the main sector road for the next 48 hours. Heavy vehicles and traffic diverted via the internal service lane. Commuters please plan ahead.");
-                if (chipRoleResident != null) chipRoleResident.setChecked(true);
-                updateWordCounter.run();
-            });
-        }
-        if (templatePowerCut != null) {
-            templatePowerCut.setOnClickListener(v -> {
-                etNoticeTitle.setText("Scheduled Power Outage for Feeder Maintenance on Saturday");
-                etNoticeContent.setText("Electricity department announces scheduled maintenance outage this Saturday from 10 AM to 3 PM for transformer upgradation across the sector. Inconvenience is regretted.");
-                if (chipRoleResident != null) chipRoleResident.setChecked(true);
-                updateWordCounter.run();
-            });
-        }
-        if (templateMandi != null) {
-            templateMandi.setOnClickListener(v -> {
-                etNoticeTitle.setText("Grain Mandi Government MSP Procurement Starts Monday");
-                etNoticeContent.setText("Local Anaaj Mandi will commence government MSP procurement from Monday 8 AM. Farmers are requested to bring registration token slips and bank passbooks.");
-                if (chipRolePanchayat != null) chipRolePanchayat.setChecked(true);
-                updateWordCounter.run();
-            });
-        }
+        // Initialize word counter with 0 words
+        updateWordCounter.run();
 
         // Word Counter TextWatcher (strictly <= 60 words)
         etNoticeContent.addTextChangedListener(new android.text.TextWatcher() {
@@ -2234,6 +2207,12 @@ public class HomeActivity extends AppCompatActivity {
             if (pbSubmitNotice != null) pbSubmitNotice.setVisibility(View.VISIBLE);
             if (layoutRejectionNotice != null) layoutRejectionNotice.setVisibility(View.GONE);
 
+            FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+            final String currentUid = currentUser != null ? currentUser.getUid() : "anonymous_user";
+            final String currentUserEmail = currentUser != null && currentUser.getEmail() != null ? currentUser.getEmail() : "anonymous@globalinsight.app";
+            final String currentUserName = currentUser != null && currentUser.getDisplayName() != null && !currentUser.getDisplayName().isEmpty()
+                    ? currentUser.getDisplayName() : "Community Resident";
+
             final String finalRole = authorRole;
             final double finalLat = currentGpsLat;
             final double finalLon = currentGpsLon;
@@ -2259,7 +2238,9 @@ public class HomeActivity extends AppCompatActivity {
                     JSONObject payload = new JSONObject();
                     payload.put("title", title);
                     payload.put("content", content);
-                    payload.put("author_name", "Community Member");
+                    payload.put("user_id", currentUid);
+                    payload.put("user_email", currentUserEmail);
+                    payload.put("author_name", currentUserName);
                     payload.put("author_role", finalRole);
                     payload.put("village", finalVillage != null ? finalVillage : "");
                     payload.put("tehsil", finalTehsil != null ? finalTehsil : "");
@@ -2287,6 +2268,69 @@ public class HomeActivity extends AppCompatActivity {
                         isApproved = resJson.optBoolean("approved", false);
                         responseMessage = resJson.optString("message", "Notice broadcasted successfully!");
                         rejectionReason = resJson.optString("reason", "Notice violated community safety guidelines.");
+
+                        if (isApproved) {
+                            JSONObject spotObj = resJson.optJSONObject("spotlight");
+                            String spotlightId = spotObj != null ? spotObj.optString("id", "spotlight_" + System.currentTimeMillis()) : "spotlight_" + System.currentTimeMillis();
+                            String imgUrl = spotObj != null ? spotObj.optString("image_url", "") : "";
+                            String verifiedCategory = spotObj != null ? spotObj.optString("category", "Civic Notice") : "Civic Notice";
+                            String polishedTitle = spotObj != null ? spotObj.optString("polished_title", title) : title;
+                            String polishedContent = spotObj != null ? spotObj.optString("polished_content", content) : content;
+
+                            // Save complete notice to Cloud Firestore & Realtime Database with user tracking
+                            Map<String, Object> noticeData = new HashMap<>();
+                            noticeData.put("noticeId", spotlightId);
+                            noticeData.put("userId", currentUid);
+                            noticeData.put("userEmail", currentUserEmail);
+                            noticeData.put("userName", currentUserName);
+                            noticeData.put("authorRole", finalRole);
+                            noticeData.put("title", title);
+                            noticeData.put("polishedTitle", polishedTitle);
+                            noticeData.put("content", content);
+                            noticeData.put("polishedContent", polishedContent);
+                            noticeData.put("category", verifiedCategory);
+                            noticeData.put("village", finalVillage != null ? finalVillage : "");
+                            noticeData.put("tehsil", finalTehsil != null ? finalTehsil : "");
+                            noticeData.put("district", finalDistrict != null ? finalDistrict : "");
+                            noticeData.put("state", finalState != null ? finalState : "");
+                            noticeData.put("latitude", finalLat);
+                            noticeData.put("longitude", finalLon);
+                            noticeData.put("photoUrl", imgUrl);
+                            noticeData.put("photoBase64", finalBase64Image != null ? finalBase64Image : "");
+                            noticeData.put("timestamp", System.currentTimeMillis());
+                            noticeData.put("status", "active");
+                            noticeData.put("verifiedByAi", true);
+
+                            try {
+                                // 1. Save in Cloud Firestore main collection "community_notices"
+                                FirebaseFirestore firestore = FirebaseFirestore.getInstance();
+                                firestore.collection("community_notices")
+                                        .document(spotlightId)
+                                        .set(noticeData)
+                                        .addOnSuccessListener(unused -> Log.d("HomeActivity", "Saved notice to Firestore community_notices: " + spotlightId))
+                                        .addOnFailureListener(e -> Log.e("HomeActivity", "Firestore community_notices error: " + e.getMessage()));
+
+                                // 2. Save under user's specific notices subcollection: users/{userId}/notices/{noticeId}
+                                firestore.collection("users")
+                                        .document(currentUid)
+                                        .collection("notices")
+                                        .document(spotlightId)
+                                        .set(noticeData)
+                                        .addOnSuccessListener(unused -> Log.d("HomeActivity", "Saved notice to user subcollection in Firestore"))
+                                        .addOnFailureListener(e -> Log.e("HomeActivity", "User notices Firestore save error: " + e.getMessage()));
+                            } catch (Exception e) {
+                                Log.e("HomeActivity", "Firestore save exception: " + e.getMessage());
+                            }
+
+                            try {
+                                // 3. Mirror to Firebase Realtime Database
+                                DatabaseReference rtdbRef = FirebaseDatabase.getInstance().getReference();
+                                rtdbRef.child("community_notices").child(spotlightId).setValue(noticeData);
+                                rtdbRef.child("user_notices").child(currentUid).child(spotlightId).setValue(noticeData);
+                            } catch (Exception e) {
+                                Log.e("HomeActivity", "Realtime Database save error: " + e.getMessage());
+                            }
+                        }
                     } else {
                         rejectionReason = "Server error (" + code + "). Please try again.";
                     }
